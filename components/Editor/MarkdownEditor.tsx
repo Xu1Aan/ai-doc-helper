@@ -21,22 +21,17 @@ const DEFAULT_TOOLS: Tool[] = [
   {
     id: 'pre-export',
     title: '导出预优化',
-    prompt: 'You are an expert Markdown optimizer. Please prepare this document for high-quality Word conversion. 1. Fix LaTeX formulas: ensure inline math has $...$ with NO spaces ($x$ instead of $ x $), and block math has $$...$$. 2. Fix tables: ensure they are correctly balanced with pipes. 3. Simplify complex LaTeX environments that Word might not support. 4. Maintain original content exactly.'
-  },
-  {
-    id: 'format',
-    title: '中英文排版',
-    prompt: 'Please format this text correctly. Add spaces between Chinese and English characters/numbers, fix punctuation (use full-width punctuation in Chinese sentences). Do not rewrite content.'
+    prompt: 'You are an expert Markdown optimizer. Please prepare this document for high-quality Word conversion. 1. Fix LaTeX formulas: ensure inline math has $...$ with NO spaces ($x$ instead of $ x $), and block math has $$...$$. 2. Fix tables: ensure they are correctly balanced with pipes. 3. Simplify complex LaTeX environments that Word might not support. 4. Maintain original content exactly.\n\n优化后的文档应保持原有的结构和样式\n\n输出要求：\n- 只返回优化后的Markdown内容，不要添加任何解释'
   },
   {
     id: 'polish',
     title: '学术化润色',
-    prompt: 'Please rewrite this document to be more academic and professional. Use formal vocabulary and passive voice where appropriate. Keep all Markdown elements like tables and formulas intact.'
+    prompt: 'Please rewrite this document to be more academic and professional. Use formal vocabulary and passive voice where appropriate. Keep all Markdown elements like tables and formulas intact.\n\n优化后的文档应保持原有的结构和样式\n\n输出要求：\n- 只返回优化后的Markdown内容，不要添加任何解释'
   },
   {
-    id: 'math',
-    title: '公式检查',
-    prompt: 'Review all mathematical formulas. Ensure consistent styling and fix any LaTeX syntax errors that might crash the rendering.'
+    id: 'translate-en',
+    title: '中文翻译成英文',
+    prompt: 'Please translate the following content into professional English suitable for academic or technical documents. Maintain all Markdown structures, tables, and formulas exactly as they are.\n\n优化后的文档应保持原有的结构和样式\n\n输出要求：\n- 只返回优化后的Markdown内容，不要添加任何解释'
   }
 ];
 

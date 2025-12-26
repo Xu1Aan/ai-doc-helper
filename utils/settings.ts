@@ -1,34 +1,79 @@
 
 export const AVAILABLE_MODELS = [
-  { id: 'gemini-3-flash-preview', name: 'Gemini 3.0 Flash (Preview) - 极速推荐', type: 'fast' },
-  { id: 'gemini-3-pro-preview', name: 'Gemini 3.0 Pro (Preview) - 最强推理', type: 'complex' },
-  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash - 稳定版', type: 'fast' },
+  { 
+    id: 'qwen3-omni-flash', 
+    name: 'Qwen 3 Omni Flash (推荐)', 
+    type: 'fast',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    defaultKey: 'sk-8e91ea7d3fba4f22b9a6a3e796ec8a2b'
+  },
+  { 
+    id: 'qwen3-omni-flash-realtime', 
+    name: 'Qwen 3 Omni Flash (Realtime)', 
+    type: 'fast',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    defaultKey: 'sk-8e91ea7d3fba4f22b9a6a3e796ec8a2b'
+  },
+  { 
+    id: 'qwen-flash', 
+    name: 'Qwen Flash', 
+    type: 'fast',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    defaultKey: 'sk-8e91ea7d3fba4f22b9a6a3e796ec8a2b'
+  },
+  { 
+    id: 'mimo-v2-flash', 
+    name: 'Xiaomi Mimo V2 Flash', 
+    type: 'fast',
+    baseUrl: 'https://api.xiaomimimo.com/v1',
+    defaultKey: 'sk-c6ff967bzbr38ailaga6wpsr6k4ry8ig5t0ae4lj4xxba9ep'
+  },
 ];
-
-export const getEffectiveApiKey = (): string => {
-  // 优先使用用户在界面设置的 Key，其次使用环境变量中的 Key
-  return localStorage.getItem('user_api_key') || process.env.API_KEY || '';
-};
 
 export const getEffectiveModel = (taskType: 'ocr' | 'text' = 'text'): string => {
   const userModel = localStorage.getItem('user_model');
   // 如果用户设置了模型，直接使用
   if (userModel) return userModel;
   
-  // 默认策略
-  if (taskType === 'ocr') return 'gemini-3-pro-preview'; // OCR 任务使用 Pro 模型以获得更好的视觉识别
-  
-  // 文本处理默认使用 3.0 Flash 保证速度
-  return 'gemini-3-flash-preview';
+  // 默认使用 Qwen 3 Omni Flash
+  return 'qwen3-omni-flash';
+};
+
+export const getEffectiveApiKey = (): string => {
+  // 1. 优先使用用户手动保存到 LocalStorage 的 Key (如果有且不为空)
+  const userKey = localStorage.getItem('user_api_key');
+  if (userKey && userKey.trim() !== '') return userKey;
+
+  // 2. 如果没有用户 Key，检查当前选中的模型是否有预设的默认 Key
+  const currentModel = getEffectiveModel();
+  const modelConfig = AVAILABLE_MODELS.find(m => m.id === currentModel);
+  if (modelConfig?.defaultKey) {
+    return modelConfig.defaultKey;
+  }
+
+  // 3. 最后尝试环境变量
+  return process.env.API_KEY || '';
 };
 
 export const getEffectiveBaseUrl = (): string => {
-  return localStorage.getItem('user_base_url') || '';
+  // 1. 优先使用用户手动保存的 URL
+  const userUrl = localStorage.getItem('user_base_url');
+  if (userUrl && userUrl.trim() !== '') return userUrl;
+
+  // 2. 检查当前模型是否有预设 Base URL
+  const currentModel = getEffectiveModel();
+  const modelConfig = AVAILABLE_MODELS.find(m => m.id === currentModel);
+  if (modelConfig?.baseUrl) {
+    return modelConfig.baseUrl;
+  }
+
+  return '';
 };
 
 export const saveUserSettings = (apiKey: string, model: string, baseUrl: string = '') => {
-  if (apiKey) {
-    localStorage.setItem('user_api_key', apiKey);
+  // 如果输入为空，则移除 key，这样 getEffectiveApiKey 就会读取默认值
+  if (apiKey && apiKey.trim() !== '') {
+    localStorage.setItem('user_api_key', apiKey.trim());
   } else {
     localStorage.removeItem('user_api_key');
   }
@@ -39,8 +84,9 @@ export const saveUserSettings = (apiKey: string, model: string, baseUrl: string 
     localStorage.removeItem('user_model');
   }
 
-  if (baseUrl) {
-    localStorage.setItem('user_base_url', baseUrl);
+  // 同理处理 Base URL
+  if (baseUrl && baseUrl.trim() !== '') {
+    localStorage.setItem('user_base_url', baseUrl.trim());
   } else {
     localStorage.removeItem('user_base_url');
   }

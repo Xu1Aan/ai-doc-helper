@@ -17,11 +17,11 @@ const UserCenter: React.FC = () => {
   useEffect(() => {
     if (showSettings) {
       const settings = getUserSettings();
+      // 这里只加载用户实际填写的，如果是空的(使用默认)，就保持为空
       setApiKey(settings.apiKey);
       setBaseUrl(settings.baseUrl);
       
       const storedModel = settings.model;
-      // 检查存储的模型是否在预设列表中
       const isPreset = AVAILABLE_MODELS.some(m => m.id === storedModel);
       
       if (isPreset) {
@@ -29,35 +29,36 @@ const UserCenter: React.FC = () => {
         setUseCustomModel(false);
         setCustomModelName('');
       } else if (storedModel) {
-        // 如果有值但不在预设列表中，说明是自定义模型
         setUseCustomModel(true);
         setCustomModelName(storedModel);
-        setSelectedModel(''); // 清空预设选择
+        setSelectedModel('');
       } else {
         // 默认情况
-        setSelectedModel(AVAILABLE_MODELS[1].id);
+        setSelectedModel(AVAILABLE_MODELS[0].id);
         setUseCustomModel(false);
       }
     }
   }, [showSettings]);
 
   const handleSave = () => {
-    // 根据当前模式决定保存哪个值
     const modelToSave = useCustomModel ? customModelName.trim() : selectedModel;
     
-    // 如果是自定义模式但没填内容，不允许保存
     if (useCustomModel && !modelToSave) {
         alert("请输入自定义模型名称");
         return;
     }
 
-    saveUserSettings(apiKey, modelToSave, useCustomModel ? baseUrl.trim() : '');
+    // 保存时，如果输入框为空字符串，Settings 逻辑会将其清除并使用默认值
+    saveUserSettings(apiKey, modelToSave, useCustomModel ? baseUrl.trim() : baseUrl.trim());
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
   };
 
   const currentKey = getEffectiveApiKey();
   const hasKey = !!currentKey;
+  
+  // 获取当前选中模型的预设信息，用于显示提示
+  const currentPreset = AVAILABLE_MODELS.find(m => m.id === selectedModel);
 
   return (
     <div className="relative">
@@ -83,7 +84,7 @@ const UserCenter: React.FC = () => {
           <div className="absolute right-0 mt-3 w-80 bg-white rounded-[24px] shadow-2xl border border-slate-200 z-50 p-6 animate-in fade-in zoom-in duration-200 origin-top-right">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-slate-900">用户中心</h3>
-              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold">V1.3.2</span>
+              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold">V1.4.1</span>
             </div>
             
             <div className="space-y-4">
@@ -111,9 +112,7 @@ const UserCenter: React.FC = () => {
               </div>
 
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-600 font-bold hover:underline">
-                  GET GEMINI KEY
-                </a>
+                <span className="text-[10px] text-slate-400">Supported: Alibaba Qwen, Xiaomi Mimo, Gemini</span>
                 <span className="text-[10px] text-slate-300">Local Storage Only</span>
               </div>
             </div>
@@ -130,7 +129,7 @@ const UserCenter: React.FC = () => {
                     <div className="flex items-center justify-between mb-8">
                         <div>
                             <h2 className="text-2xl font-black text-slate-900">API 配置</h2>
-                            <p className="text-slate-500 text-sm mt-1">自定义您的 AI 引擎参数</p>
+                            <p className="text-slate-500 text-sm mt-1">配置 AI 引擎参数 (支持兼容接口)</p>
                         </div>
                         <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -144,27 +143,32 @@ const UserCenter: React.FC = () => {
                                 type="password" 
                                 value={apiKey}
                                 onChange={(e) => setApiKey(e.target.value)}
-                                placeholder="sk-..."
-                                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-mono text-sm"
+                                placeholder={(!apiKey && !useCustomModel && currentPreset?.defaultKey) ? "使用系统内置 Key (Default)" : "sk-..."}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-mono text-sm placeholder:text-slate-400"
                             />
-                            <p className="text-[10px] text-slate-400 mt-2">
-                                * 您的 Key 仅存储在本地浏览器中。
-                            </p>
+                            {(!apiKey && !useCustomModel && currentPreset?.defaultKey) && (
+                                <p className="text-[10px] text-green-600 mt-2 flex items-center font-medium">
+                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                    已激活: 系统自动使用 {currentPreset.name} 的默认 Key
+                                </p>
+                            )}
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Base URL (可选 / Optional)</label>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Base URL</label>
                             <input 
                                 type="text" 
                                 value={baseUrl}
                                 onChange={(e) => setBaseUrl(e.target.value)}
-                                placeholder="默认使用 Google Gemini SDK"
-                                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-mono text-sm"
+                                placeholder={(!baseUrl && !useCustomModel && currentPreset?.baseUrl) ? "使用系统内置 URL (Default)" : "https://..."}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-mono text-sm placeholder:text-slate-400"
                             />
-                            <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
-                                * 兼容 OpenAI 格式接口 (如阿里云 DashScope、DeepSeek)。<br/>
-                                * 示例: <code className="bg-slate-100 px-1 rounded text-slate-600">https://dashscope.aliyuncs.com/compatible-mode/v1</code>
-                            </p>
+                             {(!baseUrl && !useCustomModel && currentPreset?.baseUrl) && (
+                                <p className="text-[10px] text-green-600 mt-2 flex items-center font-medium">
+                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                    已激活: 系统自动使用内置 API 地址
+                                </p>
+                            )}
                         </div>
 
                         <div>
@@ -181,6 +185,9 @@ const UserCenter: React.FC = () => {
                                             onChange={() => {
                                                 setUseCustomModel(false);
                                                 setSelectedModel(model.id);
+                                                // 切换模型时，清空输入框，让系统使用默认值
+                                                setApiKey('');
+                                                setBaseUrl('');
                                             }}
                                             className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
                                         />
@@ -213,7 +220,7 @@ const UserCenter: React.FC = () => {
                                                 type="text" 
                                                 value={customModelName}
                                                 onChange={(e) => setCustomModelName(e.target.value)}
-                                                placeholder="输入模型 ID (如: qwen-plus)"
+                                                placeholder="输入模型 ID (如: deepseek-chat)"
                                                 className="w-full px-3 py-2 rounded-lg border border-blue-200 focus:border-blue-400 outline-none text-sm font-mono bg-white text-slate-700"
                                             />
                                         </div>
