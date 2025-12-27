@@ -8,6 +8,7 @@ interface AboutModalProps {
 
 const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<'about' | 'privacy' | 'terms' | 'faq'>('about');
+  const [logoError, setLogoError] = useState(false);
 
   if (!isOpen) return null;
 
@@ -17,8 +18,19 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
         return (
           <div className="space-y-4 animate-in fade-in duration-300">
             <div className="flex flex-col items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg mb-4">
-                <span className="text-white text-3xl font-bold">A</span>
+              <div className="w-16 h-16 mb-4 flex items-center justify-center">
+                {!logoError ? (
+                  <img 
+                    src="/logo.png" 
+                    alt="Logo" 
+                    className="w-full h-full object-contain"
+                    onError={() => setLogoError(true)}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                    <span className="text-white text-3xl font-bold">A</span>
+                  </div>
+                )}
               </div>
               <h3 className="text-xl font-bold text-slate-900">AI Doc Helper</h3>
               <p className="text-slate-500 text-sm">V1.4.1 Professional</p>

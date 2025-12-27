@@ -4,6 +4,7 @@ import Header from './components/Layout/Header';
 import MarkdownEditor from './components/Editor/MarkdownEditor';
 import WordPreview from './components/Preview/WordPreview';
 import FormulaOCR from './components/OCR/FormulaOCR';
+import MultiDocProcessor from './components/MultiDoc/MultiDocProcessor';
 import { AppView, DocumentState } from './types';
 
 const App: React.FC = () => {
@@ -76,6 +77,12 @@ const App: React.FC = () => {
         {view === AppView.OCR && (
           <div className="h-full animate-in slide-in-from-bottom-4 duration-300 overflow-y-auto">
             <FormulaOCR onResult={insertAtCursor} />
+          </div>
+        )}
+
+        {view === AppView.MULTI_DOC && (
+          <div className="h-full animate-in slide-in-from-bottom-4 duration-300 overflow-y-auto">
+            <MultiDocProcessor />
           </div>
         )}
       </main>

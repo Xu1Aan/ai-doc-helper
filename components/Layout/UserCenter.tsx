@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { saveUserSettings, getUserSettings, AVAILABLE_MODELS, getEffectiveApiKey } from '../../utils/settings';
+import { saveUserSettings, getUserSettings, AVAILABLE_MODELS, getModelConfig } from '../../utils/settings';
 
 const UserCenter: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -8,58 +8,71 @@ const UserCenter: React.FC = () => {
   
   // Settings State
   const [apiKey, setApiKey] = useState('');
-  const [selectedModel, setSelectedModel] = useState(''); // 用于存储预设模型的 ID
-  const [customModelName, setCustomModelName] = useState(''); // 用于存储自定义输入的模型 ID
-  const [baseUrl, setBaseUrl] = useState(''); // 用于存储 Base URL
-  const [useCustomModel, setUseCustomModel] = useState(false); // 标记当前是否选中了自定义模式
+  const [baseUrl, setBaseUrl] = useState('');
+  
+  // Text Model State
+  const [textModel, setTextModel] = useState('');
+  const [useCustomTextModel, setUseCustomTextModel] = useState(false);
+  const [customTextModelName, setCustomTextModelName] = useState('');
+
+  // OCR Model State
+  const [ocrModel, setOcrModel] = useState(''); // Empty means "Same as Text Model"
+  const [separateOcr, setSeparateOcr] = useState(false);
+
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     if (showSettings) {
       const settings = getUserSettings();
-      // 这里只加载用户实际填写的，如果是空的(使用默认)，就保持为空
       setApiKey(settings.apiKey);
       setBaseUrl(settings.baseUrl);
       
+      // Initialize Text Model
       const storedModel = settings.model;
       const isPreset = AVAILABLE_MODELS.some(m => m.id === storedModel);
       
       if (isPreset) {
-        setSelectedModel(storedModel);
-        setUseCustomModel(false);
-        setCustomModelName('');
+        setTextModel(storedModel);
+        setUseCustomTextModel(false);
+        setCustomTextModelName('');
       } else if (storedModel) {
-        setUseCustomModel(true);
-        setCustomModelName(storedModel);
-        setSelectedModel('');
+        setUseCustomTextModel(true);
+        setCustomTextModelName(storedModel);
+        setTextModel('');
       } else {
-        // 默认情况
-        setSelectedModel(AVAILABLE_MODELS[0].id);
-        setUseCustomModel(false);
+        setTextModel(AVAILABLE_MODELS[0].id);
+        setUseCustomTextModel(false);
+      }
+
+      // Initialize OCR Model
+      const storedOcr = settings.ocrModel;
+      if (storedOcr && storedOcr !== storedModel) {
+        setSeparateOcr(true);
+        setOcrModel(storedOcr);
+      } else {
+        setSeparateOcr(false);
+        setOcrModel(AVAILABLE_MODELS[0].id); // Default to first available for dropdown
       }
     }
   }, [showSettings]);
 
   const handleSave = () => {
-    const modelToSave = useCustomModel ? customModelName.trim() : selectedModel;
+    const finalTextModel = useCustomTextModel ? customTextModelName.trim() : textModel;
+    const finalOcrModel = separateOcr ? ocrModel : ''; // Empty string means "follow text model" logic effectively
     
-    if (useCustomModel && !modelToSave) {
+    if (useCustomTextModel && !finalTextModel) {
         alert("请输入自定义模型名称");
         return;
     }
 
-    // 保存时，如果输入框为空字符串，Settings 逻辑会将其清除并使用默认值
-    saveUserSettings(apiKey, modelToSave, useCustomModel ? baseUrl.trim() : baseUrl.trim());
+    saveUserSettings(apiKey, finalTextModel, finalOcrModel, useCustomTextModel ? baseUrl.trim() : baseUrl.trim());
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
   };
 
-  const currentKey = getEffectiveApiKey();
-  const hasKey = !!currentKey;
+  const textConfig = getModelConfig('text');
+  const hasKey = !!textConfig.apiKey;
   
-  // 获取当前选中模型的预设信息，用于显示提示
-  const currentPreset = AVAILABLE_MODELS.find(m => m.id === selectedModel);
-
   return (
     <div className="relative">
       <button 
@@ -84,16 +97,16 @@ const UserCenter: React.FC = () => {
           <div className="absolute right-0 mt-3 w-80 bg-white rounded-[24px] shadow-2xl border border-slate-200 z-50 p-6 animate-in fade-in zoom-in duration-200 origin-top-right">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-slate-900">用户中心</h3>
-              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold">V1.4.1</span>
+              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold">V1.4.2</span>
             </div>
             
             <div className="space-y-4">
               <div className={`p-4 rounded-2xl ${hasKey ? 'bg-blue-50' : 'bg-red-50'}`}>
-                <p className={`text-xs font-bold uppercase mb-1 ${hasKey ? 'text-blue-700' : 'text-red-700'}`}>API 状态</p>
+                <p className={`text-xs font-bold uppercase mb-1 ${hasKey ? 'text-blue-700' : 'text-red-700'}`}>AI 引擎状态</p>
                 <div className={`flex items-center ${hasKey ? 'text-blue-600' : 'text-red-600'}`}>
                   <div className={`w-2 h-2 rounded-full mr-2 animate-pulse ${hasKey ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                  <span className="text-sm font-medium">
-                    {hasKey ? '已连接至 API' : '未配置 API Key'}
+                  <span className="text-sm font-medium truncate">
+                    {hasKey ? `当前: ${textConfig.modelName}` : '未配置有效 Key'}
                   </span>
                 </div>
               </div>
@@ -110,11 +123,6 @@ const UserCenter: React.FC = () => {
                     <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </button>
               </div>
-
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-[10px] text-slate-400">Supported: Alibaba Qwen, Xiaomi Mimo, Gemini</span>
-                <span className="text-[10px] text-slate-300">Local Storage Only</span>
-              </div>
             </div>
           </div>
         </>
@@ -124,131 +132,144 @@ const UserCenter: React.FC = () => {
       {showSettings && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowSettings(false)}></div>
-            <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg relative z-10 overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
-                <div className="p-8">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h2 className="text-2xl font-black text-slate-900">API 配置</h2>
-                            <p className="text-slate-500 text-sm mt-1">配置 AI 引擎参数 (支持兼容接口)</p>
-                        </div>
-                        <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
+            <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg relative z-10 overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto custom-scrollbar flex flex-col">
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xl font-black text-slate-900">API 高级配置</h2>
+                        <p className="text-slate-500 text-xs mt-1">定制您的 AI 引擎</p>
                     </div>
+                    <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
 
-                    <div className="space-y-6">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">API Key</label>
-                            <input 
-                                type="password" 
-                                value={apiKey}
-                                onChange={(e) => setApiKey(e.target.value)}
-                                placeholder={(!apiKey && !useCustomModel && currentPreset?.defaultKey) ? "使用系统内置 Key (Default)" : "sk-..."}
-                                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-mono text-sm placeholder:text-slate-400"
-                            />
-                            {(!apiKey && !useCustomModel && currentPreset?.defaultKey) && (
-                                <p className="text-[10px] text-green-600 mt-2 flex items-center font-medium">
-                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                    已激活: 系统自动使用 {currentPreset.name} 的默认 Key
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Base URL</label>
-                            <input 
-                                type="text" 
-                                value={baseUrl}
-                                onChange={(e) => setBaseUrl(e.target.value)}
-                                placeholder={(!baseUrl && !useCustomModel && currentPreset?.baseUrl) ? "使用系统内置 URL (Default)" : "https://..."}
-                                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-mono text-sm placeholder:text-slate-400"
-                            />
-                             {(!baseUrl && !useCustomModel && currentPreset?.baseUrl) && (
-                                <p className="text-[10px] text-green-600 mt-2 flex items-center font-medium">
-                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                    已激活: 系统自动使用内置 API 地址
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">模型选择 (Model)</label>
-                            <div className="grid gap-3">
-                                {/* 预设模型列表 */}
-                                {AVAILABLE_MODELS.map(model => (
-                                    <label key={model.id} className={`flex items-center p-3 rounded-xl border cursor-pointer transition-all ${(!useCustomModel && selectedModel === model.id) ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
+                <div className="p-6 space-y-8 overflow-y-auto">
+                    {/* 1. 主模型配置 */}
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center">
+                            <span className="bg-blue-100 text-blue-600 w-5 h-5 rounded flex items-center justify-center text-xs mr-2">1</span>
+                            主模型 (Chat/Text)
+                        </h3>
+                        <div className="space-y-3">
+                            {AVAILABLE_MODELS.map(model => (
+                                <label key={model.id} className={`flex items-center p-3 rounded-xl border cursor-pointer transition-all ${(!useCustomTextModel && textModel === model.id) ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
+                                    <input 
+                                        type="radio" 
+                                        name="text_model" 
+                                        value={model.id}
+                                        checked={!useCustomTextModel && textModel === model.id}
+                                        onChange={() => {
+                                            setUseCustomTextModel(false);
+                                            setTextModel(model.id);
+                                            setApiKey(''); // Clear override
+                                            setBaseUrl('');
+                                        }}
+                                        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <div className="ml-3">
+                                        <span className="block text-sm font-bold text-slate-700">{model.name}</span>
+                                    </div>
+                                </label>
+                            ))}
+                            
+                            {/* 自定义模型选项 */}
+                            <div className={`rounded-xl border transition-all overflow-hidden ${useCustomTextModel ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
+                                <label className="flex items-center p-3 cursor-pointer">
+                                    <input 
+                                        type="radio" 
+                                        name="text_model" 
+                                        value="custom"
+                                        checked={useCustomTextModel}
+                                        onChange={() => setUseCustomTextModel(true)}
+                                        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <div className="ml-3">
+                                        <span className="block text-sm font-bold text-slate-700">自定义模型 (Custom)</span>
+                                    </div>
+                                </label>
+                                {useCustomTextModel && (
+                                    <div className="px-3 pb-3 pl-10">
                                         <input 
-                                            type="radio" 
-                                            name="model_selection" 
-                                            value={model.id}
-                                            checked={!useCustomModel && selectedModel === model.id}
-                                            onChange={() => {
-                                                setUseCustomModel(false);
-                                                setSelectedModel(model.id);
-                                                // 切换模型时，清空输入框，让系统使用默认值
-                                                setApiKey('');
-                                                setBaseUrl('');
-                                            }}
-                                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                                            type="text" 
+                                            value={customTextModelName}
+                                            onChange={(e) => setCustomTextModelName(e.target.value)}
+                                            placeholder="输入模型 ID (如: deepseek-chat)"
+                                            className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-white text-sm font-mono outline-none text-slate-900"
                                         />
-                                        <div className="ml-3">
-                                            <span className="block text-sm font-bold text-slate-700">{model.name}</span>
-                                        </div>
-                                    </label>
-                                ))}
-
-                                {/* 自定义模型选项 */}
-                                <div className={`rounded-xl border transition-all overflow-hidden ${useCustomModel ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
-                                    <label className="flex items-center p-3 cursor-pointer">
-                                        <input 
-                                            type="radio" 
-                                            name="model_selection" 
-                                            value="custom"
-                                            checked={useCustomModel}
-                                            onChange={() => setUseCustomModel(true)}
-                                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
-                                        />
-                                        <div className="ml-3 flex-1">
-                                            <span className="block text-sm font-bold text-slate-700">自定义模型 (Custom)</span>
-                                        </div>
-                                    </label>
-                                    
-                                    {/* 当选中自定义时显示的输入框 */}
-                                    {useCustomModel && (
-                                        <div className="px-3 pb-3 pl-10 animate-in slide-in-from-top-2 duration-200 space-y-3">
-                                            <input 
-                                                type="text" 
-                                                value={customModelName}
-                                                onChange={(e) => setCustomModelName(e.target.value)}
-                                                placeholder="输入模型 ID (如: deepseek-chat)"
-                                                className="w-full px-3 py-2 rounded-lg border border-blue-200 focus:border-blue-400 outline-none text-sm font-mono bg-white text-slate-700"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-end space-x-3">
-                        <button 
-                            onClick={() => setShowSettings(false)}
-                            className="px-6 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-colors text-sm"
-                        >
-                            取消
-                        </button>
-                        <button 
-                            onClick={handleSave}
-                            className={`px-8 py-2.5 rounded-xl font-bold text-white shadow-lg transition-all text-sm flex items-center ${isSaved ? 'bg-green-500' : 'bg-blue-600 hover:bg-blue-700'}`}
-                        >
-                            {isSaved ? (
-                                <>
-                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                    已保存
-                                </>
-                            ) : '保存配置'}
-                        </button>
+                    {/* 2. OCR 模型配置 (Advanced) */}
+                    <div>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-sm font-bold text-slate-800 flex items-center">
+                                <span className="bg-indigo-100 text-indigo-600 w-5 h-5 rounded flex items-center justify-center text-xs mr-2">2</span>
+                                独立 OCR 模型 (Vision)
+                            </h3>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" className="sr-only peer" checked={separateOcr} onChange={(e) => setSeparateOcr(e.target.checked)} />
+                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
+                        </div>
+                        
+                        {separateOcr && (
+                            <div className="animate-in fade-in slide-in-from-top-2 duration-200 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                                <p className="text-xs text-indigo-600 mb-2">部分模型（如纯文本模型）不支持图片识别。您可以在此指定一个专门用于 OCR 的视觉模型。</p>
+                                <select 
+                                    value={ocrModel}
+                                    onChange={(e) => setOcrModel(e.target.value)}
+                                    className="w-full px-3 py-2 rounded-lg border border-indigo-200 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                >
+                                    {AVAILABLE_MODELS.map(m => (
+                                        <option key={m.id} value={m.id}>{m.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
+
+                    {/* 3. API Key & URL Overrides */}
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center">
+                            <span className="bg-slate-200 text-slate-600 w-5 h-5 rounded flex items-center justify-center text-xs mr-2">3</span>
+                            参数覆盖 (Global Overrides)
+                        </h3>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">API Key</label>
+                                <input 
+                                    type="password" 
+                                    value={apiKey}
+                                    onChange={(e) => setApiKey(e.target.value)}
+                                    placeholder={(!apiKey && !useCustomTextModel) ? "使用预设模型的默认 Key" : "覆盖默认 Key (sk-...)"}
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-sm font-mono placeholder:text-slate-400 focus:border-blue-500 outline-none text-slate-900"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Base URL</label>
+                                <input 
+                                    type="text" 
+                                    value={baseUrl}
+                                    onChange={(e) => setBaseUrl(e.target.value)}
+                                    placeholder={(!baseUrl && !useCustomTextModel) ? "使用预设模型的默认 URL" : "覆盖默认 URL"}
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-sm font-mono placeholder:text-slate-400 focus:border-blue-500 outline-none text-slate-900"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end space-x-3 mt-auto">
+                    <button onClick={() => setShowSettings(false)} className="px-5 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition-colors">取消</button>
+                    <button 
+                        onClick={handleSave}
+                        className={`px-6 py-2 rounded-lg font-bold text-white shadow-md transition-all text-sm flex items-center ${isSaved ? 'bg-green-500' : 'bg-blue-600 hover:bg-blue-700'}`}
+                    >
+                        {isSaved ? '已保存配置' : '保存更改'}
+                    </button>
                 </div>
             </div>
         </div>
@@ -258,3 +279,4 @@ const UserCenter: React.FC = () => {
 };
 
 export default UserCenter;
+    

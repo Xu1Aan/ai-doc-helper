@@ -1,5 +1,5 @@
 {
-  "name": "AI Doc Helper",
+  "name": "AI Doc Helper 1",
   "description": "A professional AI-powered document assistant for seamless Markdown to Word conversion, AI formula OCR, and document polishing with academic-grade precision.",
   "requestFramePermissions": [
     "camera"

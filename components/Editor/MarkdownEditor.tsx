@@ -1,7 +1,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import mammoth from 'mammoth';
-import { getEffectiveApiKey, getEffectiveModel, getEffectiveBaseUrl } from '../../utils/settings';
+import { getModelConfig } from '../../utils/settings';
 import { generateContent } from '../../utils/aiHelper';
 
 interface MarkdownEditorProps {
@@ -63,14 +63,12 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
 
   // 加载用户自定义的 Prompts 和 Custom Tools
   useEffect(() => {
-    // 1. Load Custom Tools
     const savedCustomToolsStr = localStorage.getItem('user_custom_tools');
     let customTools: Tool[] = [];
     if (savedCustomToolsStr) {
         try { customTools = JSON.parse(savedCustomToolsStr); } catch(e) { console.error(e); }
     }
 
-    // 2. Load Default Tool Overrides
     const savedPromptsStr = localStorage.getItem('user_tool_prompts');
     let savedPrompts: Record<string, string> = {};
     if (savedPromptsStr) {
@@ -91,11 +89,9 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
     
     const tool = updatedTools.find(t => t.id === id);
     if (tool?.isCustom) {
-         // Persist custom tools
          const customTools = updatedTools.filter(t => t.isCustom);
          localStorage.setItem('user_custom_tools', JSON.stringify(customTools));
     } else {
-         // Persist default overrides
          const promptMap = updatedTools
             .filter(t => !t.isCustom)
             .reduce((acc, t) => ({...acc, [t.id]: t.prompt}), {} as Record<string, string>);
@@ -121,7 +117,6 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
     const updatedTools = [...tools, newTool];
     setTools(updatedTools);
     
-    // Save custom tools
     const customTools = updatedTools.filter(t => t.isCustom);
     localStorage.setItem('user_custom_tools', JSON.stringify(customTools));
     
@@ -150,34 +145,27 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
   };
 
   const updateHistory = (newValue: string) => {
-    // 简单的历史记录管理
     const newHistory = history.slice(0, historyIndex + 1);
     newHistory.push(newValue);
-    
-    // 限制历史记录长度，防止内存溢出
     if (newHistory.length > 50) {
         newHistory.shift();
     } else {
         setHistoryIndex(newHistory.length - 1);
     }
-    
     setHistory(newHistory);
     onChange(newValue);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Ctrl+Z or Cmd+Z
     if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
       e.preventDefault();
       if (e.shiftKey) {
-        // Redo (Ctrl+Shift+Z)
         if (historyIndex < history.length - 1) {
           const nextIndex = historyIndex + 1;
           setHistoryIndex(nextIndex);
           onChange(history[nextIndex]);
         }
       } else {
-        // Undo (Ctrl+Z)
         if (historyIndex > 0) {
           const prevIndex = historyIndex - 1;
           setHistoryIndex(prevIndex);
@@ -209,8 +197,10 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
 
   const runAiTool = async (tool: Tool) => {
     setShowAiTools(false);
-    const apiKey = getEffectiveApiKey();
-    if (!apiKey) {
+    
+    // Use 'text' config
+    const config = getModelConfig('text');
+    if (!config.apiKey) {
         alert('请先在右上角用户中心配置 API Key');
         return;
     }
@@ -218,17 +208,14 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
     if (onProcessing) onProcessing(true);
     
     try {
-      const modelName = getEffectiveModel('text');
-      const baseUrl = getEffectiveBaseUrl();
-      
       const newContent = await generateContent({
-        apiKey,
-        model: modelName,
-        baseUrl: baseUrl,
+        apiKey: config.apiKey,
+        model: config.model,
+        baseUrl: config.baseUrl,
         prompt: `I want you to process the following Markdown document. ${tool.prompt}\n\nDocument Content:\n${value}`
       });
       
-      updateHistory(newContent); // AI 修改后的内容加入历史栈，方便用户撤销
+      updateHistory(newContent); 
     } catch (err) {
       console.error('AI Tool Error:', err);
       alert('AI 处理失败，请检查配置或网络连接。');
@@ -263,7 +250,6 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
     reader.onload = async (event) => {
       const arrayBuffer = event.target?.result as ArrayBuffer;
       try {
-        // Fix: Cast mammoth to any to avoid TypeScript error about missing property
         const result = await (mammoth as any).convertToMarkdown({ arrayBuffer });
         updateHistory(result.value);
       } catch (err) {
@@ -273,6 +259,9 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
     };
     reader.readAsArrayBuffer(file);
   };
+
+  // 获取当前配置用于 UI 显示
+  const activeConfig = getModelConfig('text');
 
   return (
     <div className="flex flex-col h-full relative">
@@ -305,6 +294,9 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowAiTools(false)}></div>
                 <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                   <div className="px-3 py-2 bg-indigo-50 border-b border-indigo-100">
+                       <p className="text-[10px] text-indigo-600 font-medium">当前引擎: {activeConfig.modelName}</p>
+                   </div>
                    <div className="py-1 max-h-[320px] overflow-y-auto custom-scrollbar">
                       {tools.map(tool => (
                         <div key={tool.id} className="group flex items-center w-full hover:bg-indigo-50 transition-colors pr-2">
@@ -375,7 +367,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
         onKeyDown={handleKeyDown}
       />
 
-      {/* Edit Prompt Modal */}
+      {/* Modals for Edit/Create (omitted for brevity as they are unchanged) */}
       {editingTool && (
         <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/10 backdrop-blur-[2px]">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
@@ -431,7 +423,6 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
         </div>
       )}
 
-      {/* Create Tool Modal */}
       {isCreating && (
         <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/10 backdrop-blur-[2px]">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">

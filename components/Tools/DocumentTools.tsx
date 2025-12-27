@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { getEffectiveApiKey, getEffectiveModel, getEffectiveBaseUrl } from '../../utils/settings';
+import { getModelConfig } from '../../utils/settings';
 import { generateContent } from '../../utils/aiHelper';
 
 interface DocumentToolsProps {
@@ -13,8 +13,9 @@ const DocumentTools: React.FC<DocumentToolsProps> = ({ markdown, onUpdate }) => 
   const [activeTool, setActiveTool] = useState<string | null>(null);
 
   const runAITool = async (toolName: string, prompt: string) => {
-    const apiKey = getEffectiveApiKey();
-    if (!apiKey) {
+    // Use 'text' model config
+    const config = getModelConfig('text');
+    if (!config.apiKey) {
         alert('请先在右上角用户中心配置 API Key');
         return;
     }
@@ -22,13 +23,10 @@ const DocumentTools: React.FC<DocumentToolsProps> = ({ markdown, onUpdate }) => 
     setIsProcessing(true);
     setActiveTool(toolName);
     try {
-      const modelName = getEffectiveModel('text');
-      const baseUrl = getEffectiveBaseUrl();
-      
       const newContent = await generateContent({
-        apiKey,
-        model: modelName,
-        baseUrl,
+        apiKey: config.apiKey,
+        model: config.model,
+        baseUrl: config.baseUrl,
         prompt: `I want you to process the following Markdown document. ${prompt}\n\nDocument Content:\n${markdown}`
       });
       
@@ -73,6 +71,8 @@ const DocumentTools: React.FC<DocumentToolsProps> = ({ markdown, onUpdate }) => 
     }
   ];
 
+  const activeConfig = getModelConfig('text');
+
   return (
     <div className="max-w-5xl mx-auto space-y-12 pb-20">
       <div className="text-center">
@@ -80,9 +80,15 @@ const DocumentTools: React.FC<DocumentToolsProps> = ({ markdown, onUpdate }) => 
           Document Intelligence
         </div>
         <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">AI 智能处理中心</h2>
-        <p className="text-slate-500 max-w-2xl mx-auto text-lg leading-relaxed">
-          借鉴工业级 Pandoc 转换链路，通过 AI 预处理大幅提升导出 Word 的格式准确度。
-        </p>
+        <div className="flex items-center justify-center space-x-2 text-slate-500 mb-6">
+            <span className="text-lg">借鉴工业级 Pandoc 转换链路，大幅提升格式准确度</span>
+        </div>
+        
+        {/* Model Indicator */}
+        <div className="inline-flex items-center px-4 py-1.5 rounded-full border border-slate-200 bg-white shadow-sm">
+             <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
+             <span className="text-xs font-bold text-slate-600">当前润色引擎: {activeConfig.modelName}</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

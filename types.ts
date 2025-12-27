@@ -1,7 +1,8 @@
 
 export enum AppView {
   EDITOR = 'editor',
-  OCR = 'ocr'
+  OCR = 'ocr',
+  MULTI_DOC = 'multi_doc'
 }
 
 export enum WordTemplate {
