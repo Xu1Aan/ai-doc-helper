@@ -147,7 +147,8 @@ export async function downloadDocx(markdown: string, template: WordTemplate, cus
   const headingColor = style.headingColor;
   
   // mapping alignment string to enum
-  let align: AlignmentType = AlignmentType.LEFT;
+  // Fix TS2322: use 'any' to avoid strict enum type checking issues in build
+  let align: any = AlignmentType.LEFT;
   if (style.alignment === 'center') align = AlignmentType.CENTER;
   if (style.alignment === 'justify') align = AlignmentType.JUSTIFIED;
   if (style.alignment === 'right') align = AlignmentType.RIGHT;
