@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { AppView } from '../../types';
 import UserCenter from './UserCenter';
 import AboutModal from './AboutModal';
+import { getModelConfig } from '../../utils/settings';
 
 interface HeaderProps {
   currentView: AppView;
@@ -12,6 +13,8 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ currentView, setView }) => {
   const [showAbout, setShowAbout] = useState(false);
   const [logoError, setLogoError] = useState(false);
+
+  const activeConfig = getModelConfig(currentView === AppView.AI_VISION ? 'ocr' : 'text');
 
   const tabs = [
     { id: AppView.EDITOR, name: '编辑器 (Editor)', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' },
@@ -63,6 +66,11 @@ const Header: React.FC<HeaderProps> = ({ currentView, setView }) => {
         </nav>
 
         <div className="flex items-center space-x-3">
+          <div className="hidden lg:flex items-center px-3 py-1 bg-[var(--primary-50)] border border-[var(--primary-50)] rounded-full mr-1">
+             <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary-color)] mr-2 animate-pulse"></span>
+             <span className="text-[10px] font-bold text-[var(--primary-color)] whitespace-nowrap">当前引擎: {activeConfig.modelName}</span>
+          </div>
+
           <button 
             onClick={() => setShowAbout(true)}
             className="w-8 h-8 rounded-full bg-slate-50 border border-slate-200 text-slate-400 hover:text-[var(--primary-color)] hover:border-[var(--primary-50)] hover:bg-[var(--primary-50)] flex items-center justify-center transition-all font-bold text-sm"

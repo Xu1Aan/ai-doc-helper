@@ -41,6 +41,9 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
   const [showAiTools, setShowAiTools] = useState(false);
   const [history, setHistory] = useState<string[]>([value]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  
+  // Selection State for UI feedback
+  const [selectionRange, setSelectionRange] = useState<{start: number, end: number} | null>(null);
 
   // Tools State
   const [tools, setTools] = useState<Tool[]>(DEFAULT_TOOLS);
@@ -82,6 +85,16 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
 
     setTools([...mergedDefaultTools, ...customTools]);
   }, []);
+
+  // Track selection changes to update UI in dropdown
+  const checkSelection = () => {
+    const textarea = textareaRef.current;
+    if (textarea && textarea.selectionStart !== textarea.selectionEnd) {
+        setSelectionRange({ start: textarea.selectionStart, end: textarea.selectionEnd });
+    } else {
+        setSelectionRange(null);
+    }
+  };
 
   const saveToolPrompt = (id: string, newPrompt: string) => {
     const updatedTools = tools.map(t => t.id === id ? {...t, prompt: newPrompt} : t);
@@ -184,6 +197,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
       
       setHistory(newHistory);
       onChange(val);
+      checkSelection();
   };
 
   const toolbarActions = [
@@ -197,7 +211,17 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
 
   const runAiTool = async (tool: Tool) => {
     setShowAiTools(false);
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    // Detect selection
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const hasSelection = start !== end;
     
+    // Determine target content
+    const textToProcess = hasSelection ? value.substring(start, end) : value;
+
     // Use 'text' config
     const config = getModelConfig('text');
     if (!config.apiKey) {
@@ -208,14 +232,29 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
     if (onProcessing) onProcessing(true);
     
     try {
+      // Modify prompt context slightly if selection
+      const contextPrefix = hasSelection 
+        ? "I want you to process the following text FRAGMENT (snippet from a larger document)." 
+        : "I want you to process the following Markdown document.";
+
       const newContent = await generateContent({
         apiKey: config.apiKey,
         model: config.model,
         baseUrl: config.baseUrl,
-        prompt: `I want you to process the following Markdown document. ${tool.prompt}\n\nDocument Content:\n${value}`
+        prompt: `${contextPrefix} ${tool.prompt}\n\nContent:\n${textToProcess}`
       });
       
-      updateHistory(newContent); 
+      if (hasSelection) {
+          // Replace only the selected part
+          const before = value.substring(0, start);
+          const after = value.substring(end);
+          const newValue = before + newContent + after;
+          updateHistory(newValue);
+      } else {
+          // Replace full doc
+          updateHistory(newContent); 
+      }
+      
     } catch (err) {
       console.error('AI Tool Error:', err);
       alert('AI 处理失败，请检查配置或网络连接。');
@@ -264,6 +303,12 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
   // 获取当前配置用于 UI 显示
   const activeConfig = getModelConfig('text');
 
+  // 计算选区预览片段
+  const selectedContent = selectionRange ? value.substring(selectionRange.start, selectionRange.end) : '';
+  const displaySnippet = selectedContent.length > 28 
+      ? selectedContent.substring(0, 28).replace(/[\n\r]+/g, ' ') + '...' 
+      : selectedContent.replace(/[\n\r]+/g, ' ');
+
   return (
     <div className="flex flex-col h-full relative">
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200 bg-[#F8FAFC]">
@@ -283,7 +328,8 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
           {/* AI Tools Dropdown */}
           <div className="relative">
             <button
-              onClick={() => setShowAiTools(!showAiTools)}
+              onMouseDown={(e) => e.preventDefault()} // 阻止焦点丢失，保持编辑器内文字选中状态
+              onClick={() => { checkSelection(); setShowAiTools(!showAiTools); }}
               className={`flex items-center px-3 py-1.5 rounded text-[11px] font-bold border transition-all ${
                   showAiTools 
                   ? 'bg-[var(--primary-50)] text-[var(--primary-color)] border-[var(--primary-50)]' 
@@ -298,9 +344,30 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
             {showAiTools && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowAiTools(false)}></div>
-                <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                   <div className="px-3 py-2 bg-[var(--primary-50)] border-b border-slate-100">
-                       <p className="text-[10px] text-[var(--primary-color)] font-medium">当前引擎: {activeConfig.modelName}</p>
+                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                   <div className="px-3 py-2 bg-[var(--primary-50)] border-b border-slate-100 flex flex-col gap-1">
+                       <p className="text-[10px] text-[var(--primary-color)] font-medium flex items-center justify-between">
+                           <span>当前引擎: {activeConfig.modelName}</span>
+                       </p>
+                       
+                       {selectionRange ? (
+                           <div className="bg-white/80 border border-[var(--primary-color)] border-opacity-30 rounded-lg p-2 mt-1 shadow-sm">
+                               <p className="text-[10px] font-bold text-[var(--primary-color)] flex items-center mb-1">
+                                   <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse"></span>
+                                   已选中 {selectionRange.end - selectionRange.start} 字符 (仅处理选区)
+                               </p>
+                               <div className="text-[10px] text-slate-600 font-mono bg-slate-50 rounded px-1.5 py-1 truncate border border-slate-200 opacity-80">
+                                   "{displaySnippet}"
+                               </div>
+                           </div>
+                       ) : (
+                           <div className="mt-1 px-2 py-1 rounded border border-transparent">
+                                <p className="text-[10px] font-bold text-slate-400 flex items-center">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-300 mr-1.5"></span>
+                                    未选择文字 (将处理全文)
+                                </p>
+                           </div>
+                       )}
                    </div>
                    <div className="py-1 max-h-[320px] overflow-y-auto custom-scrollbar">
                       {tools.map(tool => (
@@ -369,7 +436,9 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
         placeholder="在这里输入 Markdown 内容，或点击上方导入 Word... (支持 Ctrl+Z 撤销)"
         value={value}
         onChange={handleTextareaChange}
+        onSelect={checkSelection}
         onKeyDown={handleKeyDown}
+        onClick={checkSelection}
       />
 
       {/* Modals for Edit/Create */}

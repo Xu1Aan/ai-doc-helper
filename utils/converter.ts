@@ -230,7 +230,7 @@ export async function downloadDocx(markdown: string, template: WordTemplate, cus
                 sections.push(new Paragraph({
                     children: [
                         new ImageRun({
-                            data: new Uint8Array(imgData.data),
+                            data: imgData.data, // Use ArrayBuffer directly
                             transformation: {
                                 width: finalWidth,
                                 height: finalHeight,
@@ -240,7 +240,7 @@ export async function downloadDocx(markdown: string, template: WordTemplate, cus
                                 description: alt,
                                 name: alt,
                             }
-                        }),
+                        } as any), // Cast to any to avoid union type mismatch issues
                         new TextRun({
                              text: `\n图: ${alt}`,
                              font: font,

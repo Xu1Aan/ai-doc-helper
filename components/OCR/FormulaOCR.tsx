@@ -48,7 +48,6 @@ const FormulaOCR: React.FC<FormulaOCRProps> = ({ onResult }) => {
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const activeConfig = getModelConfig('ocr');
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     const items = e.clipboardData.items;
@@ -396,11 +395,6 @@ const FormulaOCR: React.FC<FormulaOCRProps> = ({ onResult }) => {
                     ✍️ 手写体识别
                 </button>
             </div>
-        </div>
-
-        <div className="inline-flex items-center px-3 py-1 bg-[var(--primary-50)] border border-[var(--primary-50)] rounded-full">
-             <span className="w-2 h-2 rounded-full bg-[var(--primary-color)] mr-2 animate-pulse"></span>
-             <span className="text-xs font-bold text-[var(--primary-color)]">当前引擎: {activeConfig.modelName}</span>
         </div>
       </div>
 

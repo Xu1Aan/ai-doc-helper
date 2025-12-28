@@ -11,7 +11,7 @@ import { downloadDocx } from '../../utils/converter';
 import { WordTemplate } from '../../types';
 
 // PDF & Excel Imports
-// Note: These libraries are imported via esm.sh in index.html, using 'any' to bypass TS check
+// Note: These libraries are loaded via <script> tags in index.html to expose global variables
 declare const pdfjsLib: any;
 declare const XLSX: any;
 
@@ -194,11 +194,11 @@ const MultiDocProcessor: React.FC = () => {
             const result = await mammoth.extractRawText({ arrayBuffer });
             return result.value;
           } else if (file.name.endsWith('.pdf')) {
-             if (typeof pdfjsLib === 'undefined') return "[Error: PDF parser not loaded]";
+             if (typeof pdfjsLib === 'undefined') return "[Error: PDF parser not loaded. Please ensure scripts are loaded.]";
              
              // Setup worker manually if using CDN import without bundler
              if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-                 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://esm.sh/pdfjs-dist@3.11.174/build/pdf.worker.min.js`;
+                 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
              }
 
              const arrayBuffer = await file.arrayBuffer();
