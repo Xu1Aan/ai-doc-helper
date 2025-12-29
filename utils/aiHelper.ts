@@ -30,14 +30,16 @@ export async function generateContent(req: AIRequest): Promise<string> {
     }
 
     // User Content (Text + Image)
-    const content: any[] = [{ type: 'text', text: req.prompt }];
-    
+    // Simplify: use string if no image, array if image exists
+    let content: any = req.prompt;
     if (req.image) {
-      // OpenAI/Compatible standard usually expects data URI for images
-      content.push({
-        type: 'image_url',
-        image_url: { url: `data:${mimeType};base64,${req.image}` }
-      });
+       content = [
+           { type: 'text', text: req.prompt },
+           {
+               type: 'image_url',
+               image_url: { url: `data:${mimeType};base64,${req.image}` }
+           }
+       ];
     }
     
     messages.push({ role: 'user', content });
@@ -56,7 +58,9 @@ export async function generateContent(req: AIRequest): Promise<string> {
        if (typeof lastMsg.content === 'string') {
            lastMsg.content += jsonInstruction;
        } else if (Array.isArray(lastMsg.content)) {
-           lastMsg.content[0].text += jsonInstruction;
+           // Find text part
+           const textPart = lastMsg.content.find((p: any) => p.type === 'text');
+           if (textPart) textPart.text += jsonInstruction;
        }
     }
 
@@ -132,12 +136,17 @@ export async function* generateContentStream(req: AIRequest): AsyncGenerator<str
     if (req.baseUrl) {
       const messages: any[] = [];
       if (req.systemInstruction) messages.push({ role: 'system', content: req.systemInstruction });
-      const content: any[] = [{ type: 'text', text: req.prompt }];
+      
+      // Simplify content structure for better compatibility
+      let content: any = req.prompt;
       if (req.image) {
-        content.push({
-          type: 'image_url',
-          image_url: { url: `data:${mimeType};base64,${req.image}` }
-        });
+        content = [
+            { type: 'text', text: req.prompt },
+            {
+                type: 'image_url',
+                image_url: { url: `data:${mimeType};base64,${req.image}` }
+            }
+        ];
       }
       messages.push({ role: 'user', content });
   
@@ -162,7 +171,8 @@ export async function* generateContentStream(req: AIRequest): AsyncGenerator<str
       });
   
       if (!response.ok || !response.body) {
-         throw new Error(`Stream Error ${response.status}`);
+         const errText = await response.text();
+         throw new Error(`Stream Error ${response.status}: ${errText}`);
       }
   
       const reader = response.body.getReader();
