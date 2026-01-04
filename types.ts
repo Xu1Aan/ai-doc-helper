@@ -28,10 +28,53 @@ export interface DocumentStyle {
   fontFace: string;
   fontSize: number;
   lineSpacing: number;
-  headingColor: string;
   textColor: string;
   alignment: string;
-  paragraphSpacing: number;
+  // 首行缩进（字符数）
+  firstLineIndent: number;
+  // 正文段落间距
+  paragraphSpacing: {
+    before: number;
+    after: number;
+  };
+  // 各级标题样式
+  heading1: {
+    fontSize: number;
+    fontFace: string;
+    color: string;
+    alignment: string;
+    lineSpacing: number;
+    spacing: {
+      before: number;
+      after: number;
+    };
+  };
+  heading2: {
+    fontSize: number;
+    fontFace: string;
+    color: string;
+    alignment: string;
+    lineSpacing: number;
+    spacing: {
+      before: number;
+      after: number;
+    };
+  };
+  heading3: {
+    fontSize: number;
+    fontFace: string;
+    color: string;
+    alignment: string;
+    lineSpacing: number;
+    spacing: {
+      before: number;
+      after: number;
+    };
+  };
+  // 表格格式选项
+  table: {
+    isThreeLineTable: boolean;
+  };
 }
 
 export interface LogEntry {

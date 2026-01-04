@@ -69,10 +69,49 @@ const WordPreview: React.FC<WordPreviewProps> = ({ markdown, isProcessing, progr
       fontFace: "SimSun",
       fontSize: 12,
       lineSpacing: 1.5,
-      headingColor: "000000",
       textColor: "000000",
       alignment: "justify",
-      paragraphSpacing: 200
+      paragraphSpacing: {
+        before: 0,
+        after: 20
+      },
+      firstLineIndent: 2,
+      heading1: {
+        fontSize: 22,
+        fontFace: "SimHei",
+        color: "000000",
+        alignment: "center",
+        lineSpacing: 1.2,
+        spacing: {
+          before: 18,
+          after: 18
+        }
+      },
+      heading2: {
+        fontSize: 18,
+        fontFace: "SimHei",
+        color: "000000",
+        alignment: "left",
+        lineSpacing: 1.2,
+        spacing: {
+          before: 12,
+          after: 12
+        }
+      },
+      heading3: {
+        fontSize: 14,
+        fontFace: "SimHei",
+        color: "000000",
+        alignment: "left",
+        lineSpacing: 1.2,
+        spacing: {
+          before: 8,
+          after: 8
+        }
+      },
+      table: {
+        isThreeLineTable: true
+      }
   });
 
   // 动态计算缩放比例，确保 A4 纸张完整显示
@@ -123,7 +162,9 @@ const WordPreview: React.FC<WordPreviewProps> = ({ markdown, isProcessing, progr
           fontSize: `${customStyle.fontSize}pt`,
           lineHeight: customStyle.lineSpacing,
           color: `#${customStyle.textColor}`,
-          textAlign: customStyle.alignment as any
+          textAlign: customStyle.alignment as any,
+          marginTop: `${customStyle.paragraphSpacing.before}pt`,
+          marginBottom: `${customStyle.paragraphSpacing.after}pt`
       };
   };
 
@@ -241,9 +282,24 @@ const WordPreview: React.FC<WordPreviewProps> = ({ markdown, isProcessing, progr
       <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-slate-300 shadow-md z-20 space-x-2 relative">
         <div className="flex items-center space-x-2 flex-1 overflow-hidden">
           <div className="flex items-center whitespace-nowrap">
-             <span className="text-xs font-semibold text-[var(--primary-color)] mr-2">
-               {Math.round(scale * 100)}%
-             </span>
+            <div className="relative">
+              <input
+                type="number"
+                min="10"
+                max="200"
+                step="5"
+                value={Math.round(scale * 100)}
+                onChange={(e) => {
+                  const newScale = Number(e.target.value) / 100;
+                  setScale(newScale);
+                }}
+                className="w-[80px] text-xs border border-slate-300 rounded-md px-2 py-1 pr-8 focus:outline-none focus:ring-1 focus:ring-[var(--primary-color)]"
+                placeholder="缩放"
+              />
+              <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs font-semibold text-[var(--primary-color)]">
+                %
+              </span>
+            </div>
           </div>
           <div className="h-4 w-[1px] bg-slate-200"></div>
           
@@ -272,41 +328,467 @@ const WordPreview: React.FC<WordPreviewProps> = ({ markdown, isProcessing, progr
         
         {/* Style Panel Popover */}
         {showStylePanel && template === WordTemplate.CUSTOM && (
-            <div className="absolute top-full left-10 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 p-4 z-50 w-64 animate-in fade-in slide-in-from-top-2">
+            <div className="absolute top-full left-10 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 p-4 z-50 w-[420px] animate-in fade-in slide-in-from-top-2 max-h-[70vh] overflow-y-auto">
                 <h4 className="text-xs font-bold text-slate-500 mb-3 uppercase">Word 导出样式配置</h4>
-                <div className="space-y-3">
-                    <div>
-                        <label className="text-xs text-slate-700 font-medium block mb-1">字体 (Font)</label>
-                        <select 
-                            value={customStyle.fontFace}
-                            onChange={(e) => setCustomStyle({...customStyle, fontFace: e.target.value})}
-                            className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
-                        >
-                            <option value="SimSun">宋体 (SimSun)</option>
-                            <option value="Microsoft YaHei">微软雅黑</option>
-                            <option value="Times New Roman">Times New Roman</option>
-                            <option value="KaiTi">楷体</option>
-                        </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
+                
+                {/* 字体大小换算说明 */}
+                <div className="mb-4 p-2 bg-blue-50 border border-blue-100 rounded-lg">
+                    <p className="text-[10px] text-blue-700">
+                        <strong>字体大小换算：</strong>
+                        小二 = 18pt, 小三 = 15pt，小四 = 12pt，五号 = 10.5pt，小五号 = 9pt，六号 = 7.5pt
+                    </p>
+                </div>
+                
+                {/* 一级标题样式 */}
+                <div className="mb-4 pb-3 border-b border-slate-100">
+                    <h5 className="text-xs font-bold text-[var(--primary-color)] mb-2">一级标题</h5>
+                    <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">字体 (Font)</label>
+                                <select 
+                                    value={customStyle.heading1.fontFace}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, heading1: {...customStyle.heading1, fontFace: e.target.value}});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                >
+                                    <option value="SimSun">宋体 (SimSun)</option>
+                                    <option value="Microsoft YaHei">微软雅黑</option>
+                                    <option value="Times New Roman">Times New Roman</option>
+                                    <option value="KaiTi">楷体</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">字号 (pt)</label>
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="number"
+                                        min="6"
+                                        max="72"
+                                        step="0.5"
+                                        value={customStyle.heading1.fontSize}
+                                        onChange={(e) => {
+                                            setCustomStyle({...customStyle, heading1: {...customStyle.heading1, fontSize: Number(e.target.value)}});
+                                            setTemplate(WordTemplate.CUSTOM);
+                                        }}
+                                        className="flex-1 text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                        placeholder="字号 (pt)"
+                                    />
+                                    <span className="text-xs text-slate-500">pt</span>
+                                </div>
+                            </div>
+                        </div>
                         <div>
-                            <label className="text-xs text-slate-700 font-medium block mb-1">字号 (pt)</label>
+                            <label className="text-xs text-slate-700 font-medium block mb-1">对齐方式</label>
+                            <select 
+                                value={customStyle.heading1.alignment}
+                                onChange={(e) => {
+                                    setCustomStyle({...customStyle, heading1: {...customStyle.heading1, alignment: e.target.value}});
+                                    setTemplate(WordTemplate.CUSTOM);
+                                }}
+                                className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                            >
+                                <option value="center">居中对齐</option>
+                                <option value="left">左对齐</option>
+                                <option value="right">右对齐</option>
+                            </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">段前间距 (磅)</label>
+                                <input 
+                                    type="number"
+                                    value={customStyle.heading1.spacing.before}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, heading1: {...customStyle.heading1, spacing: {...customStyle.heading1.spacing, before: Number(e.target.value)}}});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">段后间距 (磅)</label>
+                                <input 
+                                    type="number"
+                                    value={customStyle.heading1.spacing.after}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, heading1: {...customStyle.heading1, spacing: {...customStyle.heading1.spacing, after: Number(e.target.value)}}});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-xs text-slate-700 font-medium block mb-1">标题颜色</label>
                             <input 
-                                type="number" 
-                                value={customStyle.fontSize}
-                                onChange={(e) => setCustomStyle({...customStyle, fontSize: Number(e.target.value)})}
+                                    type="color"
+                                    value={`#${customStyle.heading1.color}`}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, heading1: {...customStyle.heading1, color: e.target.value.replace('#', '')}});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full h-8 p-0 border border-slate-300 rounded-lg cursor-pointer focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                />
+                        </div>
+                    </div>
+                </div>
+                
+                {/* 二级标题样式 */}
+                <div className="mb-4 pb-3 border-b border-slate-100">
+                    <h5 className="text-xs font-bold text-[var(--primary-color)] mb-2">二级标题</h5>
+                    <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">字体 (Font)</label>
+                                <select 
+                                    value={customStyle.heading2.fontFace}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, heading2: {...customStyle.heading2, fontFace: e.target.value}});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                >
+                                    <option value="SimSun">宋体 (SimSun)</option>
+                                    <option value="Microsoft YaHei">微软雅黑</option>
+                                    <option value="Times New Roman">Times New Roman</option>
+                                    <option value="KaiTi">楷体</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">字号 (pt)</label>
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="number"
+                                        min="6"
+                                        max="72"
+                                        step="0.5"
+                                        value={customStyle.heading2.fontSize}
+                                        onChange={(e) => {
+                                            setCustomStyle({...customStyle, heading2: {...customStyle.heading2, fontSize: Number(e.target.value)}});
+                                            setTemplate(WordTemplate.CUSTOM);
+                                        }}
+                                        className="flex-1 text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                        placeholder="字号 (pt)"
+                                    />
+                                    <span className="text-xs text-slate-500">pt</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-xs text-slate-700 font-medium block mb-1">对齐方式</label>
+                            <select 
+                                value={customStyle.heading2.alignment}
+                                onChange={(e) => {
+                                    setCustomStyle({...customStyle, heading2: {...customStyle.heading2, alignment: e.target.value}});
+                                    setTemplate(WordTemplate.CUSTOM);
+                                }}
+                                className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                            >
+                                <option value="left">左对齐</option>
+                                <option value="center">居中对齐</option>
+                                <option value="right">右对齐</option>
+                            </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">段前间距 (磅)</label>
+                                <input 
+                                    type="number"
+                                    value={customStyle.heading2.spacing.before}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, heading2: {...customStyle.heading2, spacing: {...customStyle.heading2.spacing, before: Number(e.target.value)}}});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">段后间距 (磅)</label>
+                                <input 
+                                    type="number"
+                                    value={customStyle.heading2.spacing.after}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, heading2: {...customStyle.heading2, spacing: {...customStyle.heading2.spacing, after: Number(e.target.value)}}});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-xs text-slate-700 font-medium block mb-1">标题颜色</label>
+                            <input 
+                                    type="color"
+                                    value={`#${customStyle.heading2.color}`}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, heading2: {...customStyle.heading2, color: e.target.value.replace('#', '')}});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full h-8 p-0 border border-slate-300 rounded-lg cursor-pointer focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                />
+                        </div>
+                    </div>
+                </div>
+                
+                {/* 三级标题样式 */}
+                <div className="mb-4 pb-3 border-b border-slate-100">
+                    <h5 className="text-xs font-bold text-[var(--primary-color)] mb-2">三级标题</h5>
+                    <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">字体 (Font)</label>
+                                <select 
+                                    value={customStyle.heading3.fontFace}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, heading3: {...customStyle.heading3, fontFace: e.target.value}});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                >
+                                    <option value="SimSun">宋体 (SimSun)</option>
+                                    <option value="Microsoft YaHei">微软雅黑</option>
+                                    <option value="Times New Roman">Times New Roman</option>
+                                    <option value="KaiTi">楷体</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">字号 (pt)</label>
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="number"
+                                        min="6"
+                                        max="72"
+                                        step="0.5"
+                                        value={customStyle.heading3.fontSize}
+                                        onChange={(e) => {
+                                            setCustomStyle({...customStyle, heading3: {...customStyle.heading3, fontSize: Number(e.target.value)}});
+                                            setTemplate(WordTemplate.CUSTOM);
+                                        }}
+                                        className="flex-1 text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                        placeholder="字号 (pt)"
+                                    />
+                                    <span className="text-xs text-slate-500">pt</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-xs text-slate-700 font-medium block mb-1">对齐方式</label>
+                            <select 
+                                value={customStyle.heading3.alignment}
+                                onChange={(e) => {
+                                    setCustomStyle({...customStyle, heading3: {...customStyle.heading3, alignment: e.target.value}});
+                                    setTemplate(WordTemplate.CUSTOM);
+                                }}
+                                className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                            >
+                                <option value="left">左对齐</option>
+                                <option value="center">居中对齐</option>
+                                <option value="right">右对齐</option>
+                            </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">段前间距 (磅)</label>
+                                <input 
+                                    type="number"
+                                    value={customStyle.heading3.spacing.before}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, heading3: {...customStyle.heading3, spacing: {...customStyle.heading3.spacing, before: Number(e.target.value)}}});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">段后间距 (磅)</label>
+                                <input 
+                                    type="number"
+                                    value={customStyle.heading3.spacing.after}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, heading3: {...customStyle.heading3, spacing: {...customStyle.heading3.spacing, after: Number(e.target.value)}}});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-xs text-slate-700 font-medium block mb-1">标题颜色</label>
+                            <input 
+                                    type="color"
+                                    value={`#${customStyle.heading3.color}`}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, heading3: {...customStyle.heading3, color: e.target.value.replace('#', '')}});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full h-8 p-0 border border-slate-300 rounded-lg cursor-pointer focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                />
+                        </div>
+                    </div>
+                </div>
+                
+                {/* 正文样式 */}
+                <div className="mb-4 pb-3 border-b border-slate-100">
+                    <h5 className="text-xs font-bold text-[var(--primary-color)] mb-2">正文样式</h5>
+                    <div className="space-y-3">
+                        <div>
+                            <label className="text-xs text-slate-700 font-medium block mb-1">字体 (Font)</label>
+                            <select 
+                                    value={customStyle.fontFace}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, fontFace: e.target.value});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                >
+                                <option value="SimSun">宋体 (SimSun)</option>
+                                <option value="Microsoft YaHei">微软雅黑</option>
+                                <option value="Times New Roman">Times New Roman</option>
+                                <option value="KaiTi">楷体</option>
+                            </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">字号 (pt)</label>
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="number"
+                                        min="6"
+                                        max="72"
+                                        step="0.5"
+                                        value={customStyle.fontSize}
+                                        onChange={(e) => {
+                                            setCustomStyle({...customStyle, fontSize: Number(e.target.value)});
+                                            setTemplate(WordTemplate.CUSTOM);
+                                        }}
+                                        className="flex-1 text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                        placeholder="字号 (pt)"
+                                    />
+                                    <span className="text-xs text-slate-500">pt</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">行距</label>
+                                <input 
+                                    type="number"
+                                    step="0.1"
+                                    value={customStyle.lineSpacing}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, lineSpacing: Number(e.target.value)});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-xs text-slate-700 font-medium block mb-1">对齐方式</label>
+                            <select 
+                                    value={customStyle.alignment}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, alignment: e.target.value});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                >
+                                <option value="justify">两端对齐</option>
+                                <option value="left">左对齐</option>
+                                <option value="center">居中对齐</option>
+                                <option value="right">右对齐</option>
+                            </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">段前间距 (磅)</label>
+                                <input 
+                                    type="number"
+                                    value={customStyle.paragraphSpacing.before}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, paragraphSpacing: {...customStyle.paragraphSpacing, before: Number(e.target.value)}});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-700 font-medium block mb-1">段后间距 (磅)</label>
+                                <input 
+                                    type="number"
+                                    value={customStyle.paragraphSpacing.after}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, paragraphSpacing: {...customStyle.paragraphSpacing, after: Number(e.target.value)}});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-xs text-slate-700 font-medium block mb-1">首行缩进 (字符)</label>
+                            <input 
+                                type="number"
+                                min="0"
+                                max="10"
+                                step="0.5"
+                                value={customStyle.firstLineIndent}
+                                onChange={(e) => {
+                                    setCustomStyle({...customStyle, firstLineIndent: Number(e.target.value)});
+                                    setTemplate(WordTemplate.CUSTOM);
+                                }}
                                 className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
                             />
                         </div>
                         <div>
-                            <label className="text-xs text-slate-700 font-medium block mb-1">行距</label>
+                            <label className="text-xs text-slate-700 font-medium block mb-1">正文颜色</label>
                             <input 
-                                type="number" 
-                                step="0.1"
-                                value={customStyle.lineSpacing}
-                                onChange={(e) => setCustomStyle({...customStyle, lineSpacing: Number(e.target.value)})}
-                                className="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                    type="color"
+                                    value={`#${customStyle.textColor}`}
+                                    onChange={(e) => {
+                                        setCustomStyle({...customStyle, textColor: e.target.value.replace('#', '')});
+                                        setTemplate(WordTemplate.CUSTOM);
+                                    }}
+                                    className="w-full h-8 p-0 border border-slate-300 rounded-lg cursor-pointer focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent outline-none"
+                                />
+                        </div>
+                    </div>
+                </div>
+                
+                {/* 表格样式 */}
+                <div className="mb-4">
+                    <h5 className="text-xs font-bold text-[var(--primary-color)] mb-2">表格样式</h5>
+                    <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="radio"
+                                id="threeLineTable"
+                                name="tableType"
+                                value="threeLine"
+                                checked={customStyle.table.isThreeLineTable}
+                                onChange={(e) => {
+                                    setCustomStyle({...customStyle, table: {...customStyle.table, isThreeLineTable: true}});
+                                    setTemplate(WordTemplate.CUSTOM);
+                                }}
+                                className="text-[var(--primary-color)] focus:ring-[var(--primary-color)]"
                             />
+                            <label htmlFor="threeLineTable" className="text-xs text-slate-700 font-medium">三线表</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="radio"
+                                id="normalTable"
+                                name="tableType"
+                                value="normal"
+                                checked={!customStyle.table.isThreeLineTable}
+                                onChange={(e) => {
+                                    setCustomStyle({...customStyle, table: {...customStyle.table, isThreeLineTable: false}});
+                                    setTemplate(WordTemplate.CUSTOM);
+                                }}
+                                className="text-[var(--primary-color)] focus:ring-[var(--primary-color)]"
+                            />
+                            <label htmlFor="normalTable" className="text-xs text-slate-700 font-medium">普通表格</label>
                         </div>
                     </div>
                 </div>
@@ -366,23 +848,103 @@ const WordPreview: React.FC<WordPreviewProps> = ({ markdown, isProcessing, progr
           >
             <ReactMarkdown 
               remarkPlugins={[remarkGfm, remarkMath]} 
-              rehypePlugins={[rehypeKatex]}
+              rehypePlugins={[rehypeKatex]} 
               components={{
-                h1: ({node, ...props}) => <h1 className="text-4xl font-bold mb-10 text-center text-slate-900 border-b-0 pb-0" {...props} />,
-                h2: ({node, ...props}) => <h2 className="text-2xl font-bold mt-10 mb-5 border-b-2 border-slate-900 pb-2 break-words" {...props} />,
-                h3: ({node, ...props}) => <h3 className="text-xl font-bold mt-8 mb-4 text-slate-800 break-words" {...props} />,
-                p: ({node, ...props}) => <p className="mb-4 text-justify leading-relaxed text-slate-800 break-words" {...props} />,
+                h1: ({node, ...props}) => <h1 
+                  style={{
+                    fontFamily: customStyle.heading1.fontFace,
+                    fontSize: `${customStyle.heading1.fontSize}pt`,
+                    color: `#${customStyle.heading1.color}`,
+                    textAlign: customStyle.heading1.alignment as any,
+                    lineHeight: customStyle.heading1.lineSpacing,
+                    marginTop: `${customStyle.heading1.spacing.before}pt`,
+                    marginBottom: `${customStyle.heading1.spacing.after}pt`,
+                    textIndent: 0
+                  }}
+                  {...props} 
+                />,
+                h2: ({node, ...props}) => <h2 
+                  style={{
+                    fontFamily: customStyle.heading2.fontFace,
+                    fontSize: `${customStyle.heading2.fontSize}pt`,
+                    color: `#${customStyle.heading2.color}`,
+                    textAlign: customStyle.heading2.alignment as any,
+                    lineHeight: customStyle.heading2.lineSpacing,
+                    marginTop: `${customStyle.heading2.spacing.before}pt`,
+                    marginBottom: `${customStyle.heading2.spacing.after}pt`,
+                    textIndent: 0
+                  }}
+                  {...props} 
+                />,
+                h3: ({node, ...props}) => <h3 
+                  style={{
+                    fontFamily: customStyle.heading3.fontFace,
+                    fontSize: `${customStyle.heading3.fontSize}pt`,
+                    color: `#${customStyle.heading3.color}`,
+                    textAlign: customStyle.heading3.alignment as any,
+                    lineHeight: customStyle.heading3.lineSpacing,
+                    marginTop: `${customStyle.heading3.spacing.before}pt`,
+                    marginBottom: `${customStyle.heading3.spacing.after}pt`,
+                    textIndent: 0
+                  }}
+                  {...props} 
+                />,
+                p: ({node, ...props}) => <p 
+                  style={{
+                    fontFamily: customStyle.fontFace,
+                    fontSize: `${customStyle.fontSize}pt`,
+                    color: `#${customStyle.textColor}`,
+                    textAlign: customStyle.alignment as any,
+                    lineHeight: customStyle.lineSpacing,
+                    marginTop: `${customStyle.paragraphSpacing.before}pt`,
+                    marginBottom: `${customStyle.paragraphSpacing.after}pt`,
+                    textIndent: `${customStyle.firstLineIndent}em`
+                  }}
+                  {...props} 
+                />,
                 img: ({node, ...props}) => <img className="mx-auto rounded-lg shadow-md max-h-[500px]" {...props} />,
                 table: ({node, ...props}) => (
                   <div className="overflow-x-auto my-6">
-                    <table className="min-w-full border-collapse border border-slate-400" {...props} />
+                    <table className={`min-w-full border-collapse ${customStyle.table.isThreeLineTable ? 'border-t-2 border-b-2 border-slate-900' : 'border border-slate-400'}`} {...props} />
                   </div>
                 ),
-                thead: ({node, ...props}) => <thead className="bg-slate-100" {...props} />,
-                th: ({node, ...props}) => <th className="border border-slate-400 px-4 py-2 font-bold text-slate-800" {...props} />,
-                td: ({node, ...props}) => <td className="border border-slate-400 px-4 py-2 text-slate-700" {...props} />,
-                ul: ({node, ...props}) => <ul className="list-disc pl-8 mb-4" {...props} />,
-                ol: ({node, ...props}) => <ol className="list-decimal pl-8 mb-4" {...props} />,
+                thead: ({node, ...props}) => <thead className={customStyle.table.isThreeLineTable ? 'bg-white' : 'bg-slate-100'} {...props} />,
+                th: ({node, ...props}) => <th 
+                  style={{
+                    fontFamily: customStyle.fontFace,
+                    fontSize: `${customStyle.fontSize - 1}pt`,
+                    color: `#${customStyle.textColor}`
+                  }}
+                  className={`px-4 py-2 font-bold ${customStyle.table.isThreeLineTable ? 'border-b border-slate-900' : 'border border-slate-400'}`} 
+                  {...props} 
+                />,
+                td: ({node, ...props}) => <td 
+                  style={{
+                    fontFamily: customStyle.fontFace,
+                    fontSize: `${customStyle.fontSize - 1}pt`,
+                    color: `#${customStyle.textColor}`
+                  }}
+                  className={`px-4 py-2 ${customStyle.table.isThreeLineTable ? 'border-b border-slate-300' : 'border border-slate-400'}`} 
+                  {...props} 
+                />,
+                ul: ({node, ...props}) => <ul 
+                  style={{
+                    fontFamily: customStyle.fontFace,
+                    fontSize: `${customStyle.fontSize}pt`,
+                    color: `#${customStyle.textColor}`
+                  }}
+                  className="list-disc pl-8 mb-4" 
+                  {...props} 
+                />,
+                ol: ({node, ...props}) => <ol 
+                  style={{
+                    fontFamily: customStyle.fontFace,
+                    fontSize: `${customStyle.fontSize}pt`,
+                    color: `#${customStyle.textColor}`
+                  }}
+                  className="list-decimal pl-8 mb-4" 
+                  {...props} 
+                />,
                 // Updated Code Block Component
                 code: CodeBlock,
                 // Explicitly handle math nodes to avoid object rendering errors

@@ -67,33 +67,33 @@ function parseInlineStyles(text: string, font: string, fontSize: number, color: 
 
   while ((match = regex.exec(text)) !== null) {
     // 添加匹配前的纯文本
-    if (match.index > lastIndex) {
-      runs.push(new TextRun({ text: text.substring(lastIndex, match.index), font, size: fontSize * 2, color }));
-    }
+        if (match.index > lastIndex) {
+          runs.push(new TextRun({ text: text.substring(lastIndex, match.index), font, size: fontSize * 2, color }));
+        }
 
-    const marker = match[1];
-    const content = match[2];
+        const marker = match[1];
+        const content = match[2];
 
-    if (marker === '***') {
-      runs.push(new TextRun({ text: content, font, size: fontSize * 2, bold: true, italics: true, color }));
-    } else if (marker === '**' || marker === '__') {
-      runs.push(new TextRun({ text: content, font, size: fontSize * 2, bold: true, color }));
-    } else if (marker === '*' || marker === '_') {
-      runs.push(new TextRun({ text: content, font, size: fontSize * 2, italics: true, color }));
-    } else if (marker === '`') {
-      runs.push(new TextRun({ 
-        text: content, 
-        font: "JetBrains Mono", 
-        size: (fontSize - 1) * 2, 
-        shading: { type: ShadingType.SOLID, color: "F1F5F9" },
-        color: "E11D48" 
-      }));
-    } else if (marker === '$') {
-      // 使用 DocxMath 和 MathRun 包裹行内公式 (Docx 原生支持)
-      runs.push(new DocxMath({
-        children: [new MathRun(content)]
-      }));
-    }
+        if (marker === '***') {
+          runs.push(new TextRun({ text: content, font, size: fontSize * 2, bold: true, italics: true, color }));
+        } else if (marker === '**' || marker === '__') {
+          runs.push(new TextRun({ text: content, font, size: fontSize * 2, bold: true, color }));
+        } else if (marker === '*' || marker === '_') {
+          runs.push(new TextRun({ text: content, font, size: fontSize * 2, italics: true, color }));
+        } else if (marker === '`') {
+          runs.push(new TextRun({ 
+            text: content, 
+            font: "JetBrains Mono", 
+            size: (fontSize - 1) * 2, 
+            shading: { type: ShadingType.SOLID, color: "F1F5F9" },
+            color: "E11D48" 
+          }));
+        } else if (marker === '$') {
+          // 使用 DocxMath 和 MathRun 包裹行内公式 (Docx 原生支持)
+          runs.push(new DocxMath({
+            children: [new MathRun(content)]
+          }));
+        }
 
     lastIndex = regex.lastIndex;
   }
@@ -110,29 +110,146 @@ const DEFAULT_STYLES: Record<string, DocumentStyle> = {
   [WordTemplate.STANDARD]: {
     fontFace: "SimSun",
     fontSize: 12,
-    lineSpacing: 1.2,
-    headingColor: "000000",
+    lineSpacing: 1.5,
     textColor: "000000",
     alignment: "justify",
-    paragraphSpacing: 200
+    paragraphSpacing: {
+      before: 0,
+      after: 6
+    },
+    firstLineIndent: 2,
+    heading1: {
+      fontSize: 22,
+      fontFace: "SimHei",
+      color: "000000",
+      alignment: "center",
+      lineSpacing: 1.2,
+      spacing: {
+        before: 18,
+        after: 18
+      }
+    },
+    heading2: {
+      fontSize: 18,
+      fontFace: "SimHei",
+      color: "000000",
+      alignment: "left",
+      lineSpacing: 1.2,
+      spacing: {
+        before: 12,
+        after: 12
+      }
+    },
+    heading3: {
+      fontSize: 14,
+      fontFace: "SimHei",
+      color: "000000",
+      alignment: "left",
+      lineSpacing: 1.2,
+      spacing: {
+        before: 8,
+        after: 8
+      }
+    },
+    table: {
+      isThreeLineTable: true
+    }
   },
   [WordTemplate.ACADEMIC]: {
     fontFace: "Times New Roman",
     fontSize: 10.5,
     lineSpacing: 1.5,
-    headingColor: "000000",
     textColor: "000000",
     alignment: "justify",
-    paragraphSpacing: 100
+    paragraphSpacing: {
+      before: 0,
+      after: 100
+    },
+    firstLineIndent: 0,
+    heading1: {
+      fontSize: 18,
+      fontFace: "Times New Roman",
+      color: "000000",
+      alignment: "center",
+      lineSpacing: 1.5,
+      spacing: {
+        before: 350,
+        after: 250
+      }
+    },
+    heading2: {
+      fontSize: 16,
+      fontFace: "Times New Roman",
+      color: "000000",
+      alignment: "left",
+      lineSpacing: 1.5,
+      spacing: {
+        before: 300,
+        after: 200
+      }
+    },
+    heading3: {
+      fontSize: 14,
+      fontFace: "Times New Roman",
+      color: "000000",
+      alignment: "left",
+      lineSpacing: 1.5,
+      spacing: {
+        before: 250,
+        after: 150
+      }
+    },
+    table: {
+      isThreeLineTable: true
+    }
   },
   [WordTemplate.NOTE]: {
     fontFace: "Microsoft YaHei",
     fontSize: 11,
     lineSpacing: 1.5,
-    headingColor: "2563EB",
     textColor: "374151",
     alignment: "left",
-    paragraphSpacing: 300
+    paragraphSpacing: {
+      before: 0,
+      after: 300
+    },
+    firstLineIndent: 0,
+    heading1: {
+      fontSize: 20,
+      fontFace: "Microsoft YaHei",
+      color: "2563EB",
+      alignment: "center",
+      lineSpacing: 1.5,
+      spacing: {
+        before: 400,
+        after: 300
+      }
+    },
+    heading2: {
+      fontSize: 18,
+      fontFace: "Microsoft YaHei",
+      color: "2563EB",
+      alignment: "left",
+      lineSpacing: 1.5,
+      spacing: {
+        before: 350,
+        after: 250
+      }
+    },
+    heading3: {
+      fontSize: 16,
+      fontFace: "Microsoft YaHei",
+      color: "2563EB",
+      alignment: "left",
+      lineSpacing: 1.5,
+      spacing: {
+        before: 300,
+        after: 200
+      }
+    },
+    table: {
+      isThreeLineTable: false
+    }
   }
 };
 
@@ -173,15 +290,15 @@ export async function downloadDocx(markdown: string, template: WordTemplate, cus
   const sections: any[] = [];  
   // 决定使用哪种样式配置
   const style = (template === WordTemplate.CUSTOM && customStyle) ? customStyle : (DEFAULT_STYLES[template] || DEFAULT_STYLES[WordTemplate.STANDARD]);  
-  const font = style.fontFace;
-  const fontSize = style.fontSize; 
-  const headingColor = style.headingColor;  
   // mapping alignment string to enum
   // Fix TS2322: use 'any' to avoid strict enum type checking issues in build
   let align: any = AlignmentType.LEFT;
   if (style.alignment === 'center') align = AlignmentType.CENTER;
   if (style.alignment === 'justify') align = AlignmentType.JUSTIFIED;
   if (style.alignment === 'right') align = AlignmentType.RIGHT;
+
+  // 表格计数，用于生成表号
+  let tableCount = 0;
 
   let i = 0;
   while (i < lines.length) {
@@ -191,12 +308,30 @@ export async function downloadDocx(markdown: string, template: WordTemplate, cus
     if (line.startsWith('#')) {
       const level = line.match(/^#+/)?.[0].length || 1;
       const content = line.replace(/^#+\s*/, '');
-      sections.push(new Paragraph({
-        children: parseInlineStyles(content, font, fontSize + (4-level)*2, headingColor) as any,
-        heading: level === 1 ? HeadingLevel.HEADING_1 : (level === 2 ? HeadingLevel.HEADING_2 : HeadingLevel.HEADING_3),
-        spacing: { before: 400, after: 200 },
-        alignment: level === 1 ? AlignmentType.CENTER : AlignmentType.LEFT,
-      }));
+      
+      // 使用自定义的标题样式配置
+      const headingMap = {
+        1: style.heading1,
+        2: style.heading2,
+        3: style.heading3
+      };
+      
+      const headingConfig = headingMap[level as keyof typeof headingMap] || headingMap[3];
+      
+      const alignment = headingConfig.alignment === 'center' ? AlignmentType.CENTER : 
+                       headingConfig.alignment === 'right' ? AlignmentType.RIGHT : AlignmentType.LEFT;
+      
+      const headingParagraph = new Paragraph({
+        children: parseInlineStyles(content, headingConfig.fontFace, headingConfig.fontSize, headingConfig.color) as any,
+        spacing: { 
+          before: headingConfig.spacing.before * 20, // 转换为twips (1磅 = 20 twips)
+          after: headingConfig.spacing.after * 20,  // 转换为twips (1磅 = 20 twips)
+          line: headingConfig.lineSpacing * 240
+        },
+        alignment: alignment
+      });
+      
+      sections.push(headingParagraph);
       i++;
     } 
     // 2. 处理图片 ![alt](url)
@@ -238,20 +373,27 @@ export async function downloadDocx(markdown: string, template: WordTemplate, cus
                         } as any),
                         new TextRun({
                              text: `\n图: ${alt}`,
-                             font: font,
-                             size: fontSize - 2,
+                             font: style.fontFace,
+                             size: (style.fontSize - 2) * 2,
                              color: "666666",
                              italics: true
                         })
                     ],
                     alignment: AlignmentType.CENTER,
-                    spacing: { before: 200, after: 200 }
+                    spacing: { 
+                        before: 300, // 15px
+                        after: 300 // 15px
+                    }
                 }));
             } else {
                 // Fallback text if image fails
                 sections.push(new Paragraph({
                     children: [new TextRun({ text: `[Image: ${alt} - Download Failed]`, color: "FF0000" })],
-                    alignment: AlignmentType.CENTER
+                    alignment: AlignmentType.CENTER,
+                    spacing: { 
+                        before: 300, // 15px
+                        after: 300 // 15px
+                    }
                 }));
             }
         }
@@ -274,8 +416,7 @@ export async function downloadDocx(markdown: string, template: WordTemplate, cus
             children: [
               new TableCell({
                 children: codeLines.map(cl => new Paragraph({
-                  children: [new TextRun({ text: cl, font: "JetBrains Mono", size: 20, color: "334155" })],
-                  spacing: { before: 20, after: 20 }
+                  children: [new TextRun({ text: cl, font: "JetBrains Mono", size: 20, color: "334155" })],                  spacing: { before: 20, after: 20 }
                 })),
                 shading: { fill: "F8FAFC", type: ShadingType.CLEAR },
                 borders: {
@@ -291,36 +432,113 @@ export async function downloadDocx(markdown: string, template: WordTemplate, cus
         ],
       }));
     }
-    // 4. 处理表格
+    // 4. 处理表格（融合apply_format.py的三线表思想）
     else if (line.startsWith('|')) {
+      tableCount++;
       const tableRows = [];
+      
+      // 读取表格行
       while (i < lines.length && lines[i].trim().startsWith('|')) {
         const rawRow = lines[i].trim();
         if (!rawRow.match(/^\|[:\s-]+\|/)) {
           const cells = rawRow.split('|').filter(c => c.trim() !== '' || rawRow.indexOf('|' + c + '|') !== -1).map(c => c.trim());
           if (cells.length > 0) {
+            // 检查是否是表头行（第一个非分隔行）
+            const isHeaderRow = tableRows.length === 0;
+            
             tableRows.push(new TableRow({
               children: cells.map(cell => new TableCell({
-                children: [new Paragraph({ children: parseInlineStyles(cell, font, fontSize - 1, style.textColor) as any })],
-                borders: {
-                  top: { style: BorderStyle.SINGLE, size: 1, color: "94A3B8" },
-                  bottom: { style: BorderStyle.SINGLE, size: 1, color: "94A3B8" },
-                  left: { style: BorderStyle.SINGLE, size: 1, color: "94A3B8" },
-                  right: { style: BorderStyle.SINGLE, size: 1, color: "94A3B8" },
-                },
+                  children: [new Paragraph({
+                  children: isHeaderRow 
+                    ? [new TextRun({ 
+                        text: cell, 
+                        font: style.fontFace, 
+                        size: (style.fontSize - 1) * 2, 
+                        color: style.textColor, 
+                        bold: true 
+                      })]
+                    : parseInlineStyles(cell, style.fontFace, style.fontSize - 1, style.textColor) as any,
+                  alignment: isHeaderRow ? AlignmentType.CENTER : undefined
+                })],
                 verticalAlign: VerticalAlign.CENTER,
-                margins: { top: 100, bottom: 100, left: 100, right: 100 }
+                margins: { top: 150, bottom: 150, left: 150, right: 150 }
               }))
             }));
           }
         }
         i++;
       }
-      sections.push(new Table({
+      
+      // 应用表格样式（根据用户选择的三线表或普通表格）
+      if (style.table.isThreeLineTable && tableRows.length > 0) {
+        // 三线表样式
+        // 粗线（1.2pt = 24 dxa）和细线（0.6pt = 12 dxa）
+        const thickBorder = 24;
+        const thinBorder = 12;
+        
+        // 遍历所有单元格，设置三线表样式
+        for (let rowIndex = 0; rowIndex < tableRows.length; rowIndex++) {
+          const row = tableRows[rowIndex];
+          for (const cell of row.children) {
+            // 初始边框配置
+            const borders: any = {
+              top: { style: BorderStyle.NONE, size: 0, color: "000000" },
+              bottom: { style: BorderStyle.NONE, size: 0, color: "000000" },
+              left: { style: BorderStyle.NONE, size: 0, color: "000000" },
+              right: { style: BorderStyle.NONE, size: 0, color: "000000" }
+            };
+            
+            // 第一行（表头）：上边框粗线，下边框细线
+            if (rowIndex === 0) {
+              borders.top = { style: BorderStyle.SINGLE, size: thickBorder, color: "000000" };
+              borders.bottom = { style: BorderStyle.SINGLE, size: thinBorder, color: "000000" };
+            }
+            // 最后一行：下边框粗线
+            else if (rowIndex === tableRows.length - 1) {
+              borders.bottom = { style: BorderStyle.SINGLE, size: thickBorder, color: "000000" };
+            }
+            
+            cell.borders = borders;
+          }
+        }
+      } else {
+        // 普通表格样式：所有单元格显示边框
+        for (let rowIndex = 0; rowIndex < tableRows.length; rowIndex++) {
+          const row = tableRows[rowIndex];
+          for (const cell of row.children) {
+            // 普通表格：显示所有边框
+            cell.borders = {
+              top: { style: BorderStyle.SINGLE, size: 1, color: "94A3B8" },
+              bottom: { style: BorderStyle.SINGLE, size: 1, color: "94A3B8" },
+              left: { style: BorderStyle.SINGLE, size: 1, color: "94A3B8" },
+              right: { style: BorderStyle.SINGLE, size: 1, color: "94A3B8" },
+            };
+          }
+        }
+      }
+      
+      // 创建表格
+      const table = new Table({
         rows: tableRows,
         width: { size: 100, type: WidthType.PERCENTAGE },
         alignment: AlignmentType.CENTER
-      }));
+      });
+      
+      // 添加表号和标题
+      const tableCaption = new Paragraph({
+        children: [new TextRun({ 
+          text: `表 ${tableCount} `, 
+          font: style.fontFace, 
+          size: (style.fontSize - 1) * 2, 
+          color: "000000",
+          bold: true
+        })],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 200, after: 100 }
+      });
+      
+      sections.push(tableCaption);
+      sections.push(table);
     }
     // 5. 处理块级公式
     else if (line.startsWith('$$')) {
@@ -340,16 +558,24 @@ export async function downloadDocx(markdown: string, template: WordTemplate, cus
             })
         ],
         alignment: AlignmentType.CENTER,
-        spacing: { before: 300, after: 300 }
+        spacing: { 
+          before: 350, // 17.5px
+          after: 350, // 17.5px
+          line: style.lineSpacing * 240
+        }
       }));
       i++;
     }
     // 6. 处理引用
     else if (line.startsWith('>')) {
       sections.push(new Paragraph({
-        children: parseInlineStyles(line.replace(/^>\s*/, ''), font, fontSize, "555555") as any,
-        indent: { left: 720 },
-        spacing: { after: 200 },
+        children: parseInlineStyles(line.replace(/^>\s*/, ''), style.fontFace, style.fontSize, "555555") as any,
+        indent: { left: 720 }, // 36px
+        spacing: { 
+          before: 150, // 7.5px
+          after: 150, // 7.5px
+          line: style.lineSpacing * 240
+        },
         shading: { fill: "F1F5F9", type: ShadingType.CLEAR }
       }));
       i++;
@@ -357,20 +583,27 @@ export async function downloadDocx(markdown: string, template: WordTemplate, cus
     // 7. 普通段落
     else {
       if (line !== '') {
-        sections.push(new Paragraph({
-          children: parseInlineStyles(line, font, fontSize, style.textColor) as any,
+        const paragraphConfig = {
+          children: parseInlineStyles(line, style.fontFace, style.fontSize, style.textColor) as any,
           alignment: align,
           spacing: { 
-              after: style.paragraphSpacing, 
+              before: style.paragraphSpacing.before * 20, // 转换为twips (1磅 = 20 twips)
+              after: style.paragraphSpacing.after * 20,  // 转换为twips (1磅 = 20 twips)
               line: style.lineSpacing * 240, // docx uses 240 for 1 line
-              lineRule: "auto"
+              lineRule: "atLeast" as const
+          },
+          indent: {
+            firstLine: (style.firstLineIndent || 0) * 180 // 1字符 = 180 twips
           }
-        }));
+        };
+        
+        sections.push(new Paragraph(paragraphConfig));
       }
       i++;
     }
   }
 
+  // 文档配置，融合apply_format.py的思想
   const doc = new Document({
     sections: [{
       properties: {
