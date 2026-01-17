@@ -16,20 +16,28 @@
    <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License" /></a>
 </p>
 
-<p align="center">
-   <a href="https://ai-doc.xyz" target="_blank" style="display: inline-flex; align-items: center;">
-     👉
-     <span style="font-size: 16px; font-weight: bold; color: #2563eb;">快速体验：https://ai-doc.xyz</span>
-   </a>
-</p>
+<div align="center">
 
-<p align="center">
-   <a href="#-简介">简介</a> ·
-   <a href="#-核心功能">核心功能</a> ·
-   <a href="#-快速开始">快速开始</a> ·
-   <a href="#-技术栈">技术栈</a> ·
-   <a href="#-项目结构">项目结构</a>
-</p>
+**🌐 [English](README_EN.md) | [简体中文](README.md)**
+
+<br>
+<br>
+
+<a href="https://ai-doc.xyz" target="_blank" style="display: inline-flex; align-items: center;">
+   👉
+   <span style="font-size: 16px; font-weight: bold; color: #2563eb;">快速体验：https://ai-doc.xyz</span>
+</a>
+
+<br>
+<br>
+
+<a href="#-简介">简介</a> ·
+<a href="#-核心功能">核心功能</a> ·
+<a href="#-快速开始">快速开始</a> ·
+<a href="#-技术栈">技术栈</a> ·
+<a href="#-项目结构">项目结构</a>
+
+</div>
 
 ---
 
