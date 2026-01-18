@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import mammoth from 'mammoth';
 import MathEditorController, { type MathEditorHandle } from './MathEditorController';
 import TableEditorController, { type TableEditorHandle } from './TableEditorController';
+import AlignEditorController from './AlignEditorController';
 import { getModelConfig } from '../../utils/settings';
 import { generateContentStream } from '../../utils/aiHelper';
 import { htmlToMarkdown } from '../../utils/converter';
@@ -18,6 +19,12 @@ interface Tool {
   title: string;
   prompt: string;
   isCustom?: boolean;
+}
+
+interface ToolbarAction {
+  label: string;
+  action: () => void;
+  title?: string;
 }
 
 const DEFAULT_TOOLS: Tool[] = [
@@ -294,14 +301,17 @@ Please respond with ONLY the complete prompt text, nothing else.`;
     tableEditorRef.current?.open();
   };
 
-  const toolbarActions = [
+  const toolbarActionsPrimary: ToolbarAction[] = [
     { label: 'H1', action: () => insertText('# ') },
     { label: 'H2', action: () => insertText('## ') },
-    { label: 'B', action: () => insertText('**', '**') },
+    { label: 'B', action: () => insertText('**', '**') }
+  ];
+
+  const toolbarActionsSecondary: ToolbarAction[] = [
     { label: 'Math', action: () => openMathEditor() },
     { label: 'Table', action: () => openTableEditor() },
     { label: 'Code', action: () => insertText('```\n', '\n```') },
-    { label: 'Img', action: () => insertText('![alt](', ')') }, 
+    { label: 'Img', action: () => insertText('![alt](', ')') }
   ];
 
   const runAiTool = async (tool: Tool) => {
@@ -417,11 +427,30 @@ Please respond with ONLY the complete prompt text, nothing else.`;
     <div className="flex flex-col h-full relative">
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200 bg-[#F8FAFC]">
         <div className="flex items-center space-x-1">
-          {toolbarActions.map((btn, idx) => (
+          {toolbarActionsPrimary.map((btn, idx) => (
             <button
               key={idx}
               onClick={btn.action}
               disabled={isLocked}
+              title={btn.title ?? btn.label}
+              className="p-1.5 px-3 rounded hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-300 text-[11px] font-bold text-slate-600 transition-all uppercase disabled:opacity-50"
+            >
+              {btn.label}
+            </button>
+          ))}
+
+          <AlignEditorController
+            textareaRef={textareaRef}
+            updateHistory={updateHistory}
+            isLocked={isLocked}
+          />
+
+          {toolbarActionsSecondary.map((btn, idx) => (
+            <button
+              key={`secondary-${idx}`}
+              onClick={btn.action}
+              disabled={isLocked}
+              title={btn.title ?? btn.label}
               className="p-1.5 px-3 rounded hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-300 text-[11px] font-bold text-slate-600 transition-all uppercase disabled:opacity-50"
             >
               {btn.label}

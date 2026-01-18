@@ -12,6 +12,42 @@ interface WordPreviewProps {
   progress: number;
 }
 
+type AlignMarker = 'left' | 'center' | 'right' | 'justify';
+
+const ALIGN_MARKER_TRAILING_RE = /\s*\{\:align=(left|center|right|justify)\}\s*$/;
+const ALIGN_MARKER_LEADING_RE = /^\s*\{\:align=(left|center|right|justify)\}\s*/;
+
+const stripAlignMarker = (children: React.ReactNode): { align?: AlignMarker; children: React.ReactNode[] } => {
+  const nodes = React.Children.toArray(children);
+  const nextNodes = [...nodes];
+  let align: AlignMarker | undefined;
+
+  if (nextNodes.length > 0 && typeof nextNodes[0] === 'string') {
+    const first = nextNodes[0] as string;
+    const match = first.match(ALIGN_MARKER_LEADING_RE);
+    if (match) {
+      align = match[1] as AlignMarker;
+      const cleaned = first.replace(ALIGN_MARKER_LEADING_RE, '');
+      if (cleaned.length > 0) nextNodes[0] = cleaned;
+      else nextNodes.shift();
+    }
+  }
+
+  for (let i = nextNodes.length - 1; i >= 0; i -= 1) {
+    const node = nextNodes[i];
+    if (typeof node !== 'string') continue;
+    const match = (node as string).match(ALIGN_MARKER_TRAILING_RE);
+    if (!match) continue;
+    if (!align) align = match[1] as AlignMarker;
+    const cleaned = (node as string).replace(ALIGN_MARKER_TRAILING_RE, '');
+    if (cleaned.length > 0) nextNodes[i] = cleaned;
+    else nextNodes.splice(i, 1);
+    break;
+  }
+
+  return { align, children: nextNodes };
+};
+
 const CodeBlock = ({ node, className, children, ...props }: any) => {
     const [copied, setCopied] = useState(false);
     const inline = props.inline;
@@ -850,58 +886,86 @@ const WordPreview: React.FC<WordPreviewProps> = ({ markdown, isProcessing, progr
               remarkPlugins={[remarkGfm, remarkMath]} 
               rehypePlugins={[[rehypeKatex, { output: 'html' }]]}
               components={{
-                h1: ({node, ...props}) => <h1 
-                  style={{
-                    fontFamily: customStyle.heading1.fontFace,
-                    fontSize: `${customStyle.heading1.fontSize}pt`,
-                    color: `#${customStyle.heading1.color}`,
-                    textAlign: customStyle.heading1.alignment as any,
-                    lineHeight: customStyle.heading1.lineSpacing,
-                    marginTop: `${customStyle.heading1.spacing.before}pt`,
-                    marginBottom: `${customStyle.heading1.spacing.after}pt`,
-                    textIndent: 0
-                  }}
-                  {...props} 
-                />,
-                h2: ({node, ...props}) => <h2 
-                  style={{
-                    fontFamily: customStyle.heading2.fontFace,
-                    fontSize: `${customStyle.heading2.fontSize}pt`,
-                    color: `#${customStyle.heading2.color}`,
-                    textAlign: customStyle.heading2.alignment as any,
-                    lineHeight: customStyle.heading2.lineSpacing,
-                    marginTop: `${customStyle.heading2.spacing.before}pt`,
-                    marginBottom: `${customStyle.heading2.spacing.after}pt`,
-                    textIndent: 0
-                  }}
-                  {...props} 
-                />,
-                h3: ({node, ...props}) => <h3 
-                  style={{
-                    fontFamily: customStyle.heading3.fontFace,
-                    fontSize: `${customStyle.heading3.fontSize}pt`,
-                    color: `#${customStyle.heading3.color}`,
-                    textAlign: customStyle.heading3.alignment as any,
-                    lineHeight: customStyle.heading3.lineSpacing,
-                    marginTop: `${customStyle.heading3.spacing.before}pt`,
-                    marginBottom: `${customStyle.heading3.spacing.after}pt`,
-                    textIndent: 0
-                  }}
-                  {...props} 
-                />,
-                p: ({node, ...props}) => <p 
-                  style={{
-                    fontFamily: customStyle.fontFace,
-                    fontSize: `${customStyle.fontSize}pt`,
-                    color: `#${customStyle.textColor}`,
-                    textAlign: customStyle.alignment as any,
-                    lineHeight: customStyle.lineSpacing,
-                    marginTop: `${customStyle.paragraphSpacing.before}pt`,
-                    marginBottom: `${customStyle.paragraphSpacing.after}pt`,
-                    textIndent: `${customStyle.firstLineIndent}em`
-                  }}
-                  {...props} 
-                />,
+                h1: ({node, children, ...props}) => {
+                  const { align, children: cleanChildren } = stripAlignMarker(children);
+                  return (
+                    <h1 
+                      style={{
+                        fontFamily: customStyle.heading1.fontFace,
+                        fontSize: `${customStyle.heading1.fontSize}pt`,
+                        color: `#${customStyle.heading1.color}`,
+                        textAlign: (align ?? customStyle.heading1.alignment) as any,
+                        lineHeight: customStyle.heading1.lineSpacing,
+                        marginTop: `${customStyle.heading1.spacing.before}pt`,
+                        marginBottom: `${customStyle.heading1.spacing.after}pt`,
+                        textIndent: 0
+                      }}
+                      {...props} 
+                    >
+                      {cleanChildren}
+                    </h1>
+                  );
+                },
+                h2: ({node, children, ...props}) => {
+                  const { align, children: cleanChildren } = stripAlignMarker(children);
+                  return (
+                    <h2 
+                      style={{
+                        fontFamily: customStyle.heading2.fontFace,
+                        fontSize: `${customStyle.heading2.fontSize}pt`,
+                        color: `#${customStyle.heading2.color}`,
+                        textAlign: (align ?? customStyle.heading2.alignment) as any,
+                        lineHeight: customStyle.heading2.lineSpacing,
+                        marginTop: `${customStyle.heading2.spacing.before}pt`,
+                        marginBottom: `${customStyle.heading2.spacing.after}pt`,
+                        textIndent: 0
+                      }}
+                      {...props} 
+                    >
+                      {cleanChildren}
+                    </h2>
+                  );
+                },
+                h3: ({node, children, ...props}) => {
+                  const { align, children: cleanChildren } = stripAlignMarker(children);
+                  return (
+                    <h3 
+                      style={{
+                        fontFamily: customStyle.heading3.fontFace,
+                        fontSize: `${customStyle.heading3.fontSize}pt`,
+                        color: `#${customStyle.heading3.color}`,
+                        textAlign: (align ?? customStyle.heading3.alignment) as any,
+                        lineHeight: customStyle.heading3.lineSpacing,
+                        marginTop: `${customStyle.heading3.spacing.before}pt`,
+                        marginBottom: `${customStyle.heading3.spacing.after}pt`,
+                        textIndent: 0
+                      }}
+                      {...props} 
+                    >
+                      {cleanChildren}
+                    </h3>
+                  );
+                },
+                p: ({node, children, ...props}) => {
+                  const { align, children: cleanChildren } = stripAlignMarker(children);
+                  return (
+                    <p 
+                      style={{
+                        fontFamily: customStyle.fontFace,
+                        fontSize: `${customStyle.fontSize}pt`,
+                        color: `#${customStyle.textColor}`,
+                        textAlign: (align ?? customStyle.alignment) as any,
+                        lineHeight: customStyle.lineSpacing,
+                        marginTop: `${customStyle.paragraphSpacing.before}pt`,
+                        marginBottom: `${customStyle.paragraphSpacing.after}pt`,
+                        textIndent: `${customStyle.firstLineIndent}em`
+                      }}
+                      {...props} 
+                    >
+                      {cleanChildren}
+                    </p>
+                  );
+                },
                 img: ({node, ...props}) => <img className="mx-auto rounded-lg shadow-md max-h-[500px]" {...props} />,
                 table: ({node, ...props}) => (
                   <div className="overflow-x-auto my-6">
@@ -945,6 +1009,15 @@ const WordPreview: React.FC<WordPreviewProps> = ({ markdown, isProcessing, progr
                   className="list-decimal pl-8 mb-4" 
                   {...props} 
                 />,
+                li: ({node, children, ...props}) => {
+                  const { align, children: cleanChildren } = stripAlignMarker(children);
+                  const style = align ? { textAlign: align } : undefined;
+                  return (
+                    <li style={style} {...props}>
+                      {cleanChildren}
+                    </li>
+                  );
+                },
                 // Updated Code Block Component
                 code: CodeBlock,
                 // Explicitly handle math nodes to avoid object rendering errors
@@ -967,11 +1040,100 @@ const WordPreview: React.FC<WordPreviewProps> = ({ markdown, isProcessing, progr
                     remarkPlugins={[remarkGfm, remarkMath]} 
                     rehypePlugins={[[rehypeKatex, { output: 'html' }]]}
                     components={{
-                        h1: ({node, ...props}) => <h1 style={{ fontSize: '22px', fontWeight: 'bold', borderBottom: '2px solid var(--primary-color, #2563eb)', paddingBottom: '10px', marginBottom: '20px', marginTop: '30px', textAlign: 'center', color: '#333' }} {...props} />,
-                        h2: ({node, ...props}) => <h2 style={{ fontSize: '18px', fontWeight: 'bold', borderLeft: '4px solid var(--primary-color, #2563eb)', paddingLeft: '10px', marginBottom: '16px', marginTop: '24px', backgroundColor: '#f3f4f6', padding: '5px 10px', color: '#333' }} {...props} />,
-                        h3: ({node, ...props}) => <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', marginTop: '20px', color: '#333' }} {...props} />,
-                        p: ({node, ...props}) => <p style={{ fontSize: '15px', lineHeight: '1.8', marginBottom: '14px', textAlign: 'justify', color: '#3f3f3f' }} {...props} />,
-                        li: ({node, ...props}) => <li style={{ fontSize: '15px', lineHeight: '1.8', marginBottom: '8px', color: '#3f3f3f' }} {...props} />,
+                        h1: ({node, children, ...props}) => {
+                            const { align, children: cleanChildren } = stripAlignMarker(children);
+                            return (
+                                <h1 
+                                    style={{ 
+                                        fontSize: '22px', 
+                                        fontWeight: 'bold', 
+                                        borderBottom: '2px solid var(--primary-color, #2563eb)', 
+                                        paddingBottom: '10px', 
+                                        marginBottom: '20px', 
+                                        marginTop: '30px', 
+                                        textAlign: align ?? 'center', 
+                                        color: '#333' 
+                                    }} 
+                                    {...props} 
+                                >
+                                    {cleanChildren}
+                                </h1>
+                            );
+                        },
+                        h2: ({node, children, ...props}) => {
+                            const { align, children: cleanChildren } = stripAlignMarker(children);
+                            return (
+                                <h2 
+                                    style={{ 
+                                        fontSize: '18px', 
+                                        fontWeight: 'bold', 
+                                        borderLeft: '4px solid var(--primary-color, #2563eb)', 
+                                        paddingLeft: '10px', 
+                                        marginBottom: '16px', 
+                                        marginTop: '24px', 
+                                        backgroundColor: '#f3f4f6', 
+                                        padding: '5px 10px', 
+                                        color: '#333',
+                                        textAlign: align ?? 'left'
+                                    }} 
+                                    {...props} 
+                                >
+                                    {cleanChildren}
+                                </h2>
+                            );
+                        },
+                        h3: ({node, children, ...props}) => {
+                            const { align, children: cleanChildren } = stripAlignMarker(children);
+                            return (
+                                <h3 
+                                    style={{ 
+                                        fontSize: '16px', 
+                                        fontWeight: 'bold', 
+                                        marginBottom: '12px', 
+                                        marginTop: '20px', 
+                                        color: '#333',
+                                        textAlign: align ?? 'left'
+                                    }} 
+                                    {...props} 
+                                >
+                                    {cleanChildren}
+                                </h3>
+                            );
+                        },
+                        p: ({node, children, ...props}) => {
+                            const { align, children: cleanChildren } = stripAlignMarker(children);
+                            return (
+                                <p 
+                                    style={{ 
+                                        fontSize: '15px', 
+                                        lineHeight: '1.8', 
+                                        marginBottom: '14px', 
+                                        textAlign: align ?? 'justify', 
+                                        color: '#3f3f3f' 
+                                    }} 
+                                    {...props} 
+                                >
+                                    {cleanChildren}
+                                </p>
+                            );
+                        },
+                        li: ({node, children, ...props}) => {
+                            const { align, children: cleanChildren } = stripAlignMarker(children);
+                            return (
+                                <li 
+                                    style={{ 
+                                        fontSize: '15px', 
+                                        lineHeight: '1.8', 
+                                        marginBottom: '8px', 
+                                        color: '#3f3f3f',
+                                        textAlign: align ?? 'left'
+                                    }} 
+                                    {...props} 
+                                >
+                                    {cleanChildren}
+                                </li>
+                            );
+                        },
                         strong: ({node, ...props}) => <strong style={{ color: 'var(--primary-color, #2563eb)', fontWeight: 'bold' }} {...props} />,
                         blockquote: ({node, ...props}) => <blockquote style={{ borderLeft: '4px solid #d1d5db', paddingLeft: '14px', color: '#6b7280', fontSize: '14px', fontStyle: 'italic', margin: '20px 0', backgroundColor: '#f9fafb', padding: '10px 14px' }} {...props} />,
                         img: ({node, ...props}) => <img style={{ borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', maxWidth: '100%', margin: '20px auto', display: 'block' }} {...props} />,

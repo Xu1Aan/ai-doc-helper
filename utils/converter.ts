@@ -253,6 +253,38 @@ const DEFAULT_STYLES: Record<string, DocumentStyle> = {
   }
 };
 
+const ALIGN_MARKER_TRAILING_RE = /\s*\{\:align=(left|center|right|justify)\}\s*$/;
+const ALIGN_MARKER_LEADING_RE = /^\s*\{\:align=(left|center|right|justify)\}\s*/;
+const MARKDOWN_PREFIX_RE = /^(\s*(?:#{1,6}\s+|>+\s+|(?:[-+*]|\d+\.)\s+)?)(.*)$/;
+
+const mapAlignment = (value: string): AlignmentType => {
+  if (value === 'center') return AlignmentType.CENTER;
+  if (value === 'right') return AlignmentType.RIGHT;
+  if (value === 'justify') return AlignmentType.JUSTIFIED;
+  return AlignmentType.LEFT;
+};
+
+const parseAlignmentMarker = (line: string): { line: string; alignment?: AlignmentType } => {
+  const prefixMatch = line.match(MARKDOWN_PREFIX_RE);
+  const prefix = prefixMatch ? prefixMatch[1] : '';
+  let rest = prefixMatch ? prefixMatch[2] : line;
+  let alignment: AlignmentType | undefined;
+
+  const leadingMatch = rest.match(ALIGN_MARKER_LEADING_RE);
+  if (leadingMatch) {
+    alignment = mapAlignment(leadingMatch[1]);
+    rest = rest.replace(ALIGN_MARKER_LEADING_RE, '');
+  }
+
+  const trailingMatch = rest.match(ALIGN_MARKER_TRAILING_RE);
+  if (trailingMatch) {
+    if (!alignment) alignment = mapAlignment(trailingMatch[1]);
+    rest = rest.replace(ALIGN_MARKER_TRAILING_RE, '').trimEnd();
+  }
+
+  return { line: `${prefix}${rest}`, alignment };
+};
+
 /**
  * Helper to fetch image data as ArrayBuffer and detect its natural dimensions
  */
@@ -304,6 +336,12 @@ export async function downloadDocx(markdown: string, template: WordTemplate, cus
   let i = 0;
   while (i < lines.length) {
     let line = lines[i].trim();
+    const { line: cleanedLine, alignment: lineAlignment } = parseAlignmentMarker(line);
+    line = cleanedLine;
+    if (line === '') {
+      i++;
+      continue;
+    }
 
     // 1. 处理标题
     if (line.startsWith('#')) {
@@ -319,8 +357,8 @@ export async function downloadDocx(markdown: string, template: WordTemplate, cus
       
       const headingConfig = headingMap[level as keyof typeof headingMap] || headingMap[3];
       
-      const alignment = headingConfig.alignment === 'center' ? AlignmentType.CENTER : 
-                       headingConfig.alignment === 'right' ? AlignmentType.RIGHT : AlignmentType.LEFT;
+      const alignment = lineAlignment ?? (headingConfig.alignment === 'center' ? AlignmentType.CENTER : 
+                       headingConfig.alignment === 'right' ? AlignmentType.RIGHT : AlignmentType.LEFT);
       
       const headingParagraph = new Paragraph({
         children: parseInlineStyles(content, headingConfig.fontFace, headingConfig.fontSize, headingConfig.color) as any,
@@ -579,6 +617,7 @@ export async function downloadDocx(markdown: string, template: WordTemplate, cus
           after: 150, // 7.5px
           line: style.lineSpacing * 240
         },
+        alignment: lineAlignment ?? align,
         shading: { fill: "F1F5F9", type: ShadingType.CLEAR }
       }));
       i++;
@@ -586,9 +625,11 @@ export async function downloadDocx(markdown: string, template: WordTemplate, cus
     // 7. 普通段落
     else {
       if (line !== '') {
+        const paragraphAlignment = lineAlignment ?? align;
+        const allowIndent = paragraphAlignment === AlignmentType.LEFT || paragraphAlignment === AlignmentType.JUSTIFIED;
         const paragraphConfig = {
           children: parseInlineStyles(line, style.fontFace, style.fontSize, style.textColor) as any,
-          alignment: align,
+          alignment: paragraphAlignment,
           spacing: { 
               before: style.paragraphSpacing.before * 20, // 转换为twips (1磅 = 20 twips)
               after: style.paragraphSpacing.after * 20,  // 转换为twips (1磅 = 20 twips)
@@ -596,7 +637,7 @@ export async function downloadDocx(markdown: string, template: WordTemplate, cus
               lineRule: "atLeast" as const
           },
           indent: {
-            firstLine: (style.firstLineIndent || 0) * 180 // 1字符 = 180 twips
+            firstLine: allowIndent ? (style.firstLineIndent || 0) * 180 : 0 // 1字符 = 180 twips
           }
         };
         
