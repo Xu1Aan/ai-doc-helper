@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import mammoth from 'mammoth';
 import MathEditorController, { type MathEditorHandle } from './MathEditorController';
+import TableEditorController, { type TableEditorHandle } from './TableEditorController';
 import { getModelConfig } from '../../utils/settings';
 import { generateContentStream } from '../../utils/aiHelper';
 import { htmlToMarkdown } from '../../utils/converter';
@@ -41,6 +42,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, onProc
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mathEditorRef = useRef<MathEditorHandle>(null);
+  const tableEditorRef = useRef<TableEditorHandle>(null);
   const [showAiTools, setShowAiTools] = useState(false);
   const [history, setHistory] = useState<string[]>([value]);
   const [historyIndex, setHistoryIndex] = useState(0);
@@ -288,11 +290,16 @@ Please respond with ONLY the complete prompt text, nothing else.`;
     mathEditorRef.current?.open();
   };
 
+  const openTableEditor = () => {
+    tableEditorRef.current?.open();
+  };
+
   const toolbarActions = [
     { label: 'H1', action: () => insertText('# ') },
     { label: 'H2', action: () => insertText('## ') },
     { label: 'B', action: () => insertText('**', '**') },
     { label: 'Math', action: () => openMathEditor() },
+    { label: 'Table', action: () => openTableEditor() },
     { label: 'Code', action: () => insertText('```\n', '\n```') },
     { label: 'Img', action: () => insertText('![alt](', ')') }, 
   ];
@@ -559,6 +566,12 @@ Please respond with ONLY the complete prompt text, nothing else.`;
 
       <MathEditorController
         ref={mathEditorRef}
+        textareaRef={textareaRef}
+        updateHistory={updateHistory}
+        isLocked={isLocked}
+      />
+      <TableEditorController
+        ref={tableEditorRef}
         textareaRef={textareaRef}
         updateHistory={updateHistory}
         isLocked={isLocked}
