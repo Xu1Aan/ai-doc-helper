@@ -20,8 +20,6 @@
 
 **🌐 [English](README_EN.md) | [简体中文](README.md)**
 
-<br>
-<br>
 
 <a href="https://ai-doc.xyz" target="_blank" style="display: inline-flex; align-items: center;">
    👉
@@ -29,7 +27,7 @@
 </a>
 
 <br>
-<br>
+
 
 <a href="#-简介">简介</a> ·
 <a href="#-核心功能">核心功能</a> ·
@@ -126,14 +124,14 @@
 ---
 
 ### 5.📜 用户中心
-可配置主题颜色、管理API和自定义LLM
+可配置主题颜色、系统语言、管理API和自定义LLM
 
 
 追踪所有模块的操作历史，所有内容保存在浏览器本地，保证数据安全
 
 
-<img src="public/user/user.png" alt="用户中心" width="200" />
-
+<img src="public/user/user_api.png" alt="用户中心1" width="200" />
+<img src="public/user/user_theme.png" alt="用户中心2" width="200" />
 ---
 
 ## 🚀 快速开始（您也可以访问 https://ai-doc.xyz/ 直接体验）

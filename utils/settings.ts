@@ -14,9 +14,9 @@ export const AVAILABLE_MODELS = [
     baseUrl: 'https://api.siliconflow.cn/v1/chat/completions',
     defaultKey: 'sk-xydsgjjthlqvghekjgvzdvuekglilifehtodefbxaszptliw'
   },
-  { 
-    id: 'zai-org/GLM-4.7V', 
-    name: 'GLM 4.7V', 
+  {
+    id: 'Pro/zai-org/GLM-4.7',
+    name: 'GLM 4.7',
     type: 'multimodal',
     baseUrl: 'https://api.siliconflow.cn/v1/chat/completions',
     defaultKey: 'sk-xydsgjjthlqvghekjgvzdvuekglilifehtodefbxaszptliw'

@@ -126,13 +126,14 @@ Automated research report generation system supporting web search, web page acce
 ---
 
 ### 5. 📜 User Center
-Configurable theme colors, API management, and custom LLMs
+Configurable theme colors, system language, API management, and custom LLMs
 
 
 Track all module operation history. All content is saved locally in the browser to ensure data security.
 
 
-<img src="public/user/user.png" alt="User Center" width="200" />
+<img src="public/user/user_api.png" alt="User Center 1" width="200" />
+<img src="public/user/user_theme.png" alt="User Center 2" width="200" />
 
 ---
 
