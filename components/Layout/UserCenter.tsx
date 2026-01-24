@@ -7,6 +7,7 @@ const UserCenter: React.FC = () => {
   const { locale, setLocale, t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
   
   // Settings State
   const [apiKey, setApiKey] = useState('');
@@ -130,14 +131,24 @@ const UserCenter: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-2">
-                <button 
+              <div className="pt-2 space-y-2">
+                <button
                   onClick={() => { setShowSettings(true); setIsOpen(false); }}
                   className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 transition-colors border border-slate-100"
                 >
                     <div className="flex items-center">
                         <svg className="w-5 h-5 mr-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                        <span className="font-bold text-sm">{t('userCenter.openSettings')}</span>
+                        <span className="font-bold text-sm">{t('userCenter.openModel')}</span>
+                    </div>
+                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </button>
+                <button
+                  onClick={() => { setShowLanguageModal(true); setIsOpen(false); }}
+                  className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 transition-colors border border-slate-100"
+                >
+                    <div className="flex items-center">
+                        <svg className="w-5 h-5 mr-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>
+                        <span className="font-bold text-sm">{t('userCenter.openPreferences')}</span>
                     </div>
                     <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </button>
@@ -162,31 +173,11 @@ const UserCenter: React.FC = () => {
                     </button>
                 </div>
 
-                <div className="p-6 space-y-8 overflow-y-auto">
-                    {/* 0. 主题颜色配置 */}
+                <div className="p-6 space-y-6 overflow-y-auto">
+                    {/* 主模型配置 */}
                     <div>
                         <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center">
-                            <span className="bg-slate-200 text-slate-600 w-5 h-5 rounded flex items-center justify-center text-xs mr-2">1</span>
-                            {t('userCenter.section.theme')}
-                        </h3>
-                        <div className="grid grid-cols-3 gap-3">
-                            {THEME_PRESETS.map(theme => (
-                                <button
-                                    key={theme.id}
-                                    onClick={() => setActiveTheme(theme.id)}
-                                    className={`flex items-center p-2 rounded-xl border transition-all ${activeTheme === theme.id ? 'bg-[var(--primary-50)] border-[var(--primary-color)] ring-1 ring-[var(--primary-color)]' : 'bg-white border-slate-200 hover:bg-slate-50'}`}
-                                >
-                                    <div className="w-6 h-6 rounded-full shadow-sm mr-2" style={{ backgroundColor: theme.color }}></div>
-                                    <span className="text-xs font-bold text-slate-700">{t(`theme.${theme.id}`)}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* 1. 主模型配置 */}
-                    <div>
-                        <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center">
-                            <span className="bg-[var(--primary-50)] text-[var(--primary-color)] w-5 h-5 rounded flex items-center justify-center text-xs mr-2">2</span>
+                            <span className="bg-[var(--primary-50)] text-[var(--primary-color)] w-5 h-5 rounded flex items-center justify-center text-xs mr-2">1</span>
                             {t('userCenter.section.model')}
                         </h3>
                         <div className="space-y-3">
@@ -273,23 +264,6 @@ const UserCenter: React.FC = () => {
                                         className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-sm font-mono placeholder:text-slate-400 focus:border-[var(--primary-color)] outline-none text-slate-900"
                                     />
                                 </div>
-                                <div className="pt-2">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('settings.language')}</label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <button
-                                            onClick={() => setLocale('zh')}
-                                            className={`px-3 py-2 rounded-lg border text-sm font-bold transition-all ${locale === 'zh' ? 'bg-[var(--primary-50)] border-[var(--primary-color)] text-[var(--primary-color)]' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
-                                        >
-                                            {t('settings.language.zh')}
-                                        </button>
-                                        <button
-                                            onClick={() => setLocale('en')}
-                                            className={`px-3 py-2 rounded-lg border text-sm font-bold transition-all ${locale === 'en' ? 'bg-[var(--primary-50)] border-[var(--primary-color)] text-[var(--primary-color)]' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
-                                        >
-                                            {t('settings.language.en')}
-                                        </button>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -302,6 +276,83 @@ const UserCenter: React.FC = () => {
                         className={`px-6 py-2 rounded-lg font-bold text-white shadow-md transition-all text-sm flex items-center ${isSaved ? 'bg-green-500' : 'bg-[var(--primary-color)] hover:bg-[var(--primary-hover)]'}`}
                     >
                         {isSaved ? t('userCenter.action.saved') : t('userCenter.action.save')}
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
+
+      {/* Language & Theme Modal */}
+      {showLanguageModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowLanguageModal(false)}></div>
+            <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-md relative z-10 overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xl font-black text-slate-900">{t('userCenter.preferencesTitle')}</h2>
+                        <p className="text-slate-500 text-xs mt-1">{t('userCenter.preferencesSubtitle')}</p>
+                    </div>
+                    <button onClick={() => setShowLanguageModal(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                <div className="p-6 space-y-8 overflow-y-auto">
+                    {/* 主题颜色配置 */}
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center">
+                            <span className="bg-slate-200 text-slate-600 w-5 h-5 rounded flex items-center justify-center text-xs mr-2">1</span>
+                            {t('userCenter.section.theme')}
+                        </h3>
+                        <div className="grid grid-cols-3 gap-3">
+                            {THEME_PRESETS.map(theme => (
+                                <button
+                                    key={theme.id}
+                                    onClick={() => setActiveTheme(theme.id)}
+                                    className={`flex items-center p-2 rounded-xl border transition-all ${activeTheme === theme.id ? 'bg-[var(--primary-50)] border-[var(--primary-color)] ring-1 ring-[var(--primary-color)]' : 'bg-white border-slate-200 hover:bg-slate-50'}`}
+                                >
+                                    <div className="w-6 h-6 rounded-full shadow-sm mr-2" style={{ backgroundColor: theme.color }}></div>
+                                    <span className="text-xs font-bold text-slate-700">{t(`theme.${theme.id}`)}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* 语言配置 */}
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center">
+                            <span className="bg-[var(--primary-50)] text-[var(--primary-color)] w-5 h-5 rounded flex items-center justify-center text-xs mr-2">2</span>
+                            {t('settings.language')}
+                        </h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => { setLocale('zh'); }}
+                                className={`p-4 rounded-xl border transition-all ${locale === 'zh' ? 'bg-[var(--primary-50)] border-[var(--primary-color)] ring-1 ring-[var(--primary-color)]' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+                            >
+                                <div className="text-2xl mb-2">🇨🇳</div>
+                                <div className="text-sm font-bold text-slate-700">{t('settings.language.zh')}</div>
+                            </button>
+                            <button
+                                onClick={() => { setLocale('en'); }}
+                                className={`p-4 rounded-xl border transition-all ${locale === 'en' ? 'bg-[var(--primary-50)] border-[var(--primary-color)] ring-1 ring-[var(--primary-color)]' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+                            >
+                                <div className="text-2xl mb-2">🇺🇸</div>
+                                <div className="text-sm font-bold text-slate-700">{t('settings.language.en')}</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
+                    <button
+                        onClick={() => {
+                            saveTheme(activeTheme);
+                            window.dispatchEvent(new Event('theme-change'));
+                            setShowLanguageModal(false);
+                        }}
+                        className="px-6 py-2 rounded-lg font-bold text-slate-700 hover:bg-slate-200 transition-colors text-sm"
+                    >
+                        {t('userCenter.action.close')}
                     </button>
                 </div>
             </div>
