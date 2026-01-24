@@ -256,13 +256,16 @@ const UserCenter: React.FC = () => {
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{t('userCenter.section.serperKey')}</label>
-                                    <input 
-                                        type="password" 
+                                    <input
+                                        type="password"
                                         value={serperKey}
                                         onChange={(e) => setSerperKey(e.target.value)}
                                         placeholder={t('userCenter.placeholder.serperKey')}
                                         className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-sm font-mono placeholder:text-slate-400 focus:border-[var(--primary-color)] outline-none text-slate-900"
                                     />
+                                    <p className="mt-2 text-xs text-slate-500 leading-relaxed">
+                                        💡 用于 AI 深度调研的搜索功能。如果配置后仍提示错误，请在【常见问题】中查看详细说明。
+                                    </p>
                                 </div>
                             </div>
                         </div>

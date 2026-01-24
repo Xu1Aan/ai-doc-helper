@@ -193,6 +193,10 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                     {t('about.faq.apiGet.link3')}
                   </a>
                   <br />
+                  <a href="https://serper.dev" target="_blank" rel="noopener noreferrer" className="text-[var(--primary-color)] hover:underline font-medium">
+                    {t('about.faq.apiGet.serper')}
+                  </a>
+                  <br />
                   
                   <span className="font-bold text-slate-600">{t('about.faq.apiGet.tipLabel')}</span>
                   <span className="text-slate-500">{t('about.faq.apiGet.tip')}</span>
@@ -206,8 +210,6 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                   <span className="block mt-2 font-medium text-slate-600">{t('about.faq.apiConfig.item1')}</span>
                   <span className="block font-medium text-slate-600">{t('about.faq.apiConfig.item2')}</span>
                   <span className="block font-medium text-slate-600">{t('about.faq.apiConfig.item3')}</span>
-                  
-                  <span className="block mt-2 text-slate-600">{t('about.faq.apiConfig.tip')}</span>
                 </p>
               </div>
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
