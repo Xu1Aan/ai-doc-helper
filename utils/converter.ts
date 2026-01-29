@@ -266,18 +266,20 @@ const ALIGN_MARKER_TRAILING_RE = /\s*\{\:align=(left|center|right|justify)\}\s*$
 const ALIGN_MARKER_LEADING_RE = /^\s*\{\:align=(left|center|right|justify)\}\s*/;
 const MARKDOWN_PREFIX_RE = /^(\s*(?:#{1,6}\s+|>+\s+|(?:[-+*]|\d+\.)\s+)?)(.*)$/;
 
-const mapAlignment = (value: string): AlignmentType => {
+type DocxAlignmentType = (typeof AlignmentType)[keyof typeof AlignmentType];
+
+const mapAlignment = (value: string): DocxAlignmentType => {
   if (value === 'center') return AlignmentType.CENTER;
   if (value === 'right') return AlignmentType.RIGHT;
   if (value === 'justify') return AlignmentType.JUSTIFIED;
   return AlignmentType.LEFT;
 };
 
-const parseAlignmentMarker = (line: string): { line: string; alignment?: AlignmentType } => {
+const parseAlignmentMarker = (line: string): { line: string; alignment?: DocxAlignmentType } => {
   const prefixMatch = line.match(MARKDOWN_PREFIX_RE);
   const prefix = prefixMatch ? prefixMatch[1] : '';
   let rest = prefixMatch ? prefixMatch[2] : line;
-  let alignment: AlignmentType | undefined;
+  let alignment: DocxAlignmentType | undefined;
 
   const leadingMatch = rest.match(ALIGN_MARKER_LEADING_RE);
   if (leadingMatch) {
