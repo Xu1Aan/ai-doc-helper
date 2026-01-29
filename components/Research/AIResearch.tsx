@@ -20,6 +20,8 @@ const AIResearch: React.FC<AIResearchProps> = ({ state, onUpdateState, onInsert,
   const { topic, isRunning, logs, report, sources } = state;
   const [serperKey, setSerperKey] = useState('');
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
+  const [isLogsModalOpen, setIsLogsModalOpen] = useState(false);
+  const [expandedLogIndices, setExpandedLogIndices] = useState<Set<number>>(new Set());
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -635,9 +637,16 @@ const AIResearch: React.FC<AIResearchProps> = ({ state, onUpdateState, onInsert,
           
           {/* Logs */}
           <div className="h-32 flex-none bg-slate-900 rounded-xl shadow-inner p-4 overflow-y-auto custom-scrollbar flex flex-col">
-            <div className="text-xs font-bold text-slate-400 mb-2 border-b border-slate-800 pb-2">
+            <button
+              type="button"
+              onClick={() => {
+                setExpandedLogIndices(new Set());
+                setIsLogsModalOpen(true);
+              }}
+              className="text-left text-xs font-bold text-slate-400 mb-2 border-b border-slate-800 pb-2 hover:text-slate-200 transition-colors"
+            >
               {t('research.logs.title')}
-            </div>
+            </button>
             <div className="space-y-3 font-mono text-xs flex-1">
               {logs.length === 0 && <div className="text-slate-600 italic">{t('research.logs.empty')}</div>}
               {logs.map((log, i) => (
@@ -736,6 +745,83 @@ const AIResearch: React.FC<AIResearchProps> = ({ state, onUpdateState, onInsert,
             </div>
             <div className="p-3 border-t border-slate-100 bg-white flex justify-end">
               <button onClick={() => setSelectedLog(null)} className="px-4 py-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 text-xs font-bold transition-colors">{t('common.close')}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full Logs Modal */}
+      {isLogsModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsLogsModalOpen(false)}></div>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] relative z-10 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <h3 className="font-bold text-slate-700 flex items-center text-sm">
+                <span className="mr-2 px-2 py-0.5 bg-slate-200 rounded text-xs uppercase">{t('research.logs.title')}</span>
+              </h3>
+              <button onClick={() => setIsLogsModalOpen(false)} className="p-1 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 bg-slate-50 custom-scrollbar select-text">
+              {logs.length === 0 ? (
+                <div className="font-mono text-xs text-slate-500 whitespace-pre-wrap">{t('research.logs.empty')}</div>
+              ) : (
+                <div className="space-y-4">
+                  {logs.map((log, i) => (
+                    <div key={i} className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                      {log.details ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExpandedLogIndices(prev => {
+                              const next = new Set(prev);
+                              if (next.has(i)) next.delete(i);
+                              else next.add(i);
+                              return next;
+                            });
+                          }}
+                          className={`w-full text-left px-4 py-2 border-b border-slate-100 flex items-start gap-2 font-mono text-xs hover:bg-slate-50 transition-colors ${
+                            log.type === 'error' ? 'text-red-600' :
+                            log.type === 'success' ? 'text-green-600' :
+                            log.type === 'action' ? 'text-blue-600' : 'text-slate-700'
+                          }`}
+                        >
+                          <span className="text-slate-500 shrink-0">[{log.timestamp}]</span>
+                          <span className="break-words flex-1">{log.message}</span>
+                          <span className="text-slate-400 shrink-0 mt-0.5">
+                            <svg
+                              className={`w-4 h-4 transition-transform ${expandedLogIndices.has(i) ? 'rotate-180' : ''}`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </span>
+                        </button>
+                      ) : (
+                        <div className={`px-4 py-2 border-b border-slate-100 flex items-start gap-2 font-mono text-xs ${
+                          log.type === 'error' ? 'text-red-600' :
+                          log.type === 'success' ? 'text-green-600' :
+                          log.type === 'action' ? 'text-blue-600' : 'text-slate-700'
+                        }`}>
+                          <span className="text-slate-500 shrink-0">[{log.timestamp}]</span>
+                          <span className="break-words">{log.message}</span>
+                        </div>
+                      )}
+                      {log.details && expandedLogIndices.has(i) && (
+                        <div className="px-4 py-3 font-mono text-xs text-slate-800 whitespace-pre-wrap bg-slate-50">
+                          {log.details}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="p-3 border-t border-slate-100 bg-white flex justify-end">
+              <button onClick={() => setIsLogsModalOpen(false)} className="px-4 py-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 text-xs font-bold transition-colors">{t('common.close')}</button>
             </div>
           </div>
         </div>
